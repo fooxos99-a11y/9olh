@@ -9,6 +9,9 @@ export async function GET(request: NextRequest) {
     let query = supabase.from("achievements").select("*").order("created_at", { ascending: false })
     if (student_id) {
       query = query.eq("student_id", student_id)
+    } else {
+      // الصفحة العامة: لا تُظهر الإنجازات الشخصية المضافة من الإدارة
+      query = query.neq("achievement_type", "personal")
     }
     const { data, error } = await query
 
