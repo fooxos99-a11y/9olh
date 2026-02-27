@@ -82,21 +82,21 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
       {children}
       {/* Confirmation Dialog */}
       <AlertDialog open={confirm.isOpen} onOpenChange={(open) => !open && handleCancel()}>
-        <AlertDialogContent className="sm:max-w-[500px] border-2 border-[#D4AF37]/30">
+        <AlertDialogContent className="sm:max-w-[460px] border border-[#D4AF37]/40 bg-white" dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-bold text-[#1a2332] mb-2">{confirm.title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg text-[#1a2332]/80">{confirm.message}</AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-bold text-[#1a2332]">{confirm.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-neutral-500 mt-1">{confirm.message}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-3 sm:gap-3 mt-4">
+          <AlertDialogFooter className="gap-2 sm:gap-2 mt-4 flex-row-reverse sm:flex-row-reverse">
             <AlertDialogCancel
               onClick={handleCancel}
-              className="font-bold text-base border-2 border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all px-6 py-2"
+              className="border border-[#D4AF37]/50 text-neutral-600 hover:bg-[#D4AF37]/5 font-medium text-sm"
             >
               {confirm.cancelText}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
-              className="bg-gradient-to-r from-[#D4AF37] to-[#C9A961] hover:from-[#C9A961] hover:to-[#BFA050] text-[#023232] font-bold text-base shadow-md hover:shadow-lg transition-all px-6 py-2"
+              className="border border-[#D4AF37]/50 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#C9A961] hover:text-[#D4AF37] font-semibold text-sm shadow-none"
             >
               {confirm.confirmText}
             </AlertDialogAction>
@@ -106,17 +106,17 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
 
       {/* Alert Dialog */}
       <AlertDialog open={alert.isOpen} onOpenChange={(open) => !open && handleAlertClose()}>
-        <AlertDialogContent className="sm:max-w-[500px] border-2 border-[#D4AF37]/30">
+        <AlertDialogContent className="sm:max-w-[460px] border border-[#D4AF37]/40 bg-white" dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-bold text-[#1a2332] mb-2">{alert.title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg text-[#1a2332]/80 whitespace-pre-line">
+            <AlertDialogTitle className="text-xl font-bold text-[#1a2332]">{alert.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-neutral-500 mt-1 whitespace-pre-line">
               {alert.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4">
             <AlertDialogAction
               onClick={handleAlertClose}
-              className="bg-gradient-to-r from-[#D4AF37] to-[#C9A961] hover:from-[#C9A961] hover:to-[#BFA050] text-[#023232] font-bold text-base w-full shadow-md hover:shadow-lg transition-all py-2"
+              className="border border-[#D4AF37]/50 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#C9A961] hover:text-[#D4AF37] font-semibold text-sm w-full shadow-none"
             >
               حسناً
             </AlertDialogAction>
