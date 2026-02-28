@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { student_id, teacher_id, halaqah, status, hafiz_level, tikrar_level, samaa_level, rabet_level, debug_today } = body
+    const { student_id, teacher_id, halaqah, status, hafiz_level, tikrar_level, samaa_level, rabet_level, debug_today, notes } = body
 
     // طباعة القيم المستلمة للتشخيص
     console.log("[DEBUG][API] Received attendance POST:")
@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
         .from("attendance_records")
         .update({
           status: status || "present",
+          notes: notes ?? null,
         })
         .eq("id", existingRecord.id)
         .select()
@@ -296,6 +297,7 @@ export async function POST(request: NextRequest) {
           halaqah,
           status: status || "present",
           date: todayDate,
+          notes: notes ?? null,
         })
         .select()
         .single()
