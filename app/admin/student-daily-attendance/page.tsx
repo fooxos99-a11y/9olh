@@ -77,15 +77,11 @@ export default function StudentDailyAttendancePage() {
   const router = useRouter()
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true"
-    const userRole = localStorage.getItem("userRole")
-    if (!loggedIn || userRole !== "admin") {
-      router.push("/login")
-    } else {
+    if (!authLoading && authVerified) {
       fetchAttendanceRecords()
       setIsLoading(false)
     }
-  }, [router])
+  }, [authLoading, authVerified])
 
   useEffect(() => {
     filterRecords()
