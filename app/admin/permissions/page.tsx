@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { ShieldCheck, Users, BookOpen, Settings, UserPlus, FileText, MessageSquare, Bell, Map, Zap, ShoppingBag, Save, Banknote, BarChart3 } from "lucide-react"
+import { ShieldCheck, Users, BookOpen, Settings, UserPlus, FileText, MessageSquare, Bell, Map, Zap, ShoppingBag, Save, Banknote, BarChart3, Calendar } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAdminAuth } from "@/hooks/use-admin-auth"
 import { SiteLoader } from "@/components/ui/site-loader"
@@ -20,6 +20,7 @@ const DASHBOARD_ACTIONS = [
   { key: "الإرسال إلى أولياء الأمور", icon: MessageSquare },
   { key: "الإشعارات",                 icon: Bell },
   { key: "إدارة المسار",              icon: Map },
+  { key: "إنهاء الفصل",               icon: Calendar },
   { key: "إدارة الألعاب",             icon: Zap },
   { key: "إدارة المتجر",              icon: ShoppingBag },
   { key: "المالية",                   icon: Banknote },

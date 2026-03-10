@@ -34,6 +34,7 @@ import {
   Zap,
   Bell,
   Send,
+  Calendar,
   ShoppingBag,
   Phone,
   Banknote,
@@ -1429,7 +1430,7 @@ export function Header() {
 
               {/* فئة الإدارة العامة */}
 
-              {["الإشعارات", "إدارة المسار", "إدارة المتجر", "الإرسال إلى أولياء الأمور", "الصلاحيات", "المالية", "الإحصائيات"].some(p => hasPermission(p)) && <div className="px-2 mb-0.5">
+              {["الإشعارات", "إدارة المسار", "إنهاء الفصل", "إدارة المتجر", "الإرسال إلى أولياء الأمور", "الصلاحيات", "المالية", "الإحصائيات"].some(p => hasPermission(p)) && <div className="px-2 mb-0.5">
                 <CollapseSection
                   icon={Settings}
                   label="الإدارة العامة"
@@ -1505,6 +1506,16 @@ export function Header() {
                       permKey: "الإحصائيات",
 
                       path: "/admin/statistics",
+                    },
+
+                    {
+                      icon: Calendar,
+
+                      label: "إنهاء الفصل",
+
+                      permKey: "إنهاء الفصل",
+
+                      path: "/admin/dashboard?action=end-semester",
                     },
                   ].filter(({ permKey }) => hasPermission(permKey)).map(({ icon: Ic, label, path }) => (
                     <NavItem

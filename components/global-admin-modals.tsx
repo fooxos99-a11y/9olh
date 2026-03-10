@@ -9,6 +9,7 @@ import React, { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { GlobalBulkAddStudentDialog } from "./admin-modals/global-bulk-add-student-dialog"
 import { GlobalEditPointsDialog } from "./admin-modals/global-edit-points-dialog"
+import { GlobalEndSemesterDialog } from "./admin-modals/global-end-semester-dialog"
 import { GlobalStudentRecordsDialog } from "./admin-modals/global-student-records-dialog"
 import { GlobalTeachersDialog } from "./admin-modals/global-teachers-dialog"
 
@@ -26,6 +27,7 @@ function AdminModalsContent() {
       {action === 'transfer-student' && <GlobalMoveStudentDialog />}
       {action === 'edit-student' && <GlobalEditStudentDialog />}
       {action === 'edit-points' && <GlobalEditPointsDialog />}
+      {action === 'end-semester' && <GlobalEndSemesterDialog />}
       {action === 'teachers' && <GlobalTeachersDialog />}
       {action === 'circles' && <GlobalCirclesDialog />}
       {action === 'admins' && <GlobalAdminsDialog />}

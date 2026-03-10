@@ -1006,9 +1006,9 @@ export default function HalaqahManagement() {
 
 			<main className="flex-1 py-12 px-4">
 				<div className="container mx-auto max-w-7xl">
-					<div className="mb-8 overflow-x-auto pb-1">
-						<div className="flex min-w-max flex-row-reverse items-center justify-end gap-1.5 sm:gap-2">
-							<label className="plan-history-checkbox h-9 shrink-0 rounded-full border border-[#D4AF37]/70 bg-white/90 px-3 text-xs font-semibold text-[#1a2332] shadow-sm transition-all hover:bg-[#faf7f0] sm:px-4 sm:text-sm">
+					<div className="mb-8 overflow-x-auto pb-2">
+						<div className="flex min-w-max flex-nowrap flex-row-reverse items-center justify-end gap-2 sm:gap-2.5">
+							<label className="plan-history-checkbox h-11 shrink-0 rounded-full border border-[#D4AF37]/70 bg-white/90 px-4 text-sm font-semibold text-[#1a2332] shadow-sm transition-all hover:bg-[#faf7f0] sm:h-10 sm:px-4 sm:text-sm">
 								<input
 									type="checkbox"
 									checked={showReadingSegments}
@@ -1017,12 +1017,12 @@ export default function HalaqahManagement() {
 								<span className="plan-history-checkbox__label whitespace-nowrap">معاينة الخطط</span>
 								<span className="plan-history-checkbox__mark" aria-hidden="true" />
 							</label>
-							<div className="flex flex-row-reverse items-center gap-1.5 sm:gap-2">
+							<div className="flex flex-nowrap flex-row-reverse items-center gap-2 sm:gap-2.5">
 							<Button
 								variant="outline"
 								onClick={markAllLate}
 								disabled={isSaving}
-									className="h-9 shrink-0 rounded-lg border-[#D4AF37]/80 bg-white px-2 text-xs text-neutral-600 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:px-3 sm:text-sm"
+									className="h-11 shrink-0 rounded-xl border-[#D4AF37]/80 bg-white px-4 text-sm font-semibold text-neutral-700 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:h-10 sm:px-3 sm:text-sm"
 							>
 								متأخر
 							</Button>
@@ -1030,7 +1030,7 @@ export default function HalaqahManagement() {
 								variant="outline"
 								onClick={markAllExcused}
 								disabled={isSaving}
-									className="h-9 shrink-0 rounded-lg border-[#D4AF37]/80 bg-white px-2 text-xs text-neutral-600 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:px-3 sm:text-sm"
+									className="h-11 shrink-0 rounded-xl border-[#D4AF37]/80 bg-white px-4 text-sm font-semibold text-neutral-700 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:h-10 sm:px-3 sm:text-sm"
 							>
 								مستأذن
 							</Button>
@@ -1038,7 +1038,7 @@ export default function HalaqahManagement() {
 								variant="outline"
 								onClick={markAllAbsent}
 								disabled={isSaving}
-									className="h-9 shrink-0 rounded-lg border-[#D4AF37]/80 bg-white px-2 text-xs text-neutral-600 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:px-3 sm:text-sm"
+									className="h-11 shrink-0 rounded-xl border-[#D4AF37]/80 bg-white px-4 text-sm font-semibold text-neutral-700 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:h-10 sm:px-3 sm:text-sm"
 							>
 								غائب
 							</Button>
@@ -1046,7 +1046,7 @@ export default function HalaqahManagement() {
 								variant="outline"
 								onClick={markAllPresent}
 								disabled={isSaving}
-								className="h-9 shrink-0 rounded-lg border-[#D4AF37]/80 bg-white px-2 text-xs text-neutral-600 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:px-3 sm:text-sm"
+								className="h-11 shrink-0 rounded-xl border-[#D4AF37]/80 bg-white px-4 text-sm font-semibold text-neutral-700 transition-all hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 active:bg-[#D4AF37]/15 focus-visible:border-[#D4AF37] focus-visible:bg-[#D4AF37]/10 focus-visible:text-neutral-800 focus-visible:ring-[#D4AF37]/30 sm:h-10 sm:px-3 sm:text-sm"
 							>
 								حاضر
 							</Button>

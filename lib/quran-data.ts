@@ -298,6 +298,121 @@ export function calculateQuranMemorizationProgress(plan: {
   }
 }
 
+export function getStoredMemorizedRange(range: {
+  memorized_start_surah?: number | null
+  memorized_start_verse?: number | null
+  memorized_end_surah?: number | null
+  memorized_end_verse?: number | null
+}) {
+  if (!range.memorized_start_surah || !range.memorized_end_surah) {
+    return null
+  }
+
+  const startSurahNumber = Number(range.memorized_start_surah)
+  const startVerseNumber = Number(range.memorized_start_verse) || 1
+  const endSurahNumber = Number(range.memorized_end_surah)
+  const endSurah = SURAHS.find((surah) => surah.number === endSurahNumber)
+  const endVerseNumber = Number(range.memorized_end_verse) || endSurah?.verseCount || 1
+  const startPage = getPageForAyah(startSurahNumber, startVerseNumber)
+  const endPage = getPageForAyah(endSurahNumber, endVerseNumber)
+
+  return {
+    startPage: Math.min(startPage, endPage),
+    endPage: Math.max(startPage, endPage),
+    startSurahNumber,
+    startVerseNumber,
+    endSurahNumber,
+    endVerseNumber,
+  }
+}
+
+export function getPlanMemorizedRange(plan: {
+  direction?: "asc" | "desc" | null
+  total_pages?: number | null
+  daily_pages?: number | null
+  has_previous?: boolean | null
+  prev_start_surah?: number | null
+  prev_start_verse?: number | null
+  prev_end_surah?: number | null
+  prev_end_verse?: number | null
+  start_surah_number?: number | null
+  start_verse?: number | null
+}, completedDays: number) {
+  if (!plan) return null
+
+  const direction = plan.direction === "desc" ? "desc" : "asc"
+  const previousPages = calculatePreviousMemorizedPages(plan)
+  const currentPlanPages = calculateCompletedPlanPages(
+    Number(plan.total_pages) || 0,
+    Number(plan.daily_pages) || 0,
+    completedDays,
+  )
+  const totalMemorizedPages = previousPages + currentPlanPages
+
+  if (totalMemorizedPages <= 0) return null
+
+  const anchorSurah = plan.has_previous && plan.prev_start_surah
+    ? Number(plan.prev_start_surah)
+    : Number(plan.start_surah_number)
+  const anchorVerse = plan.has_previous && plan.prev_start_surah
+    ? Number(plan.prev_start_verse) || 1
+    : Number(plan.start_verse) || 1
+
+  if (!anchorSurah) return null
+
+  const anchorPage = getPageForAyah(anchorSurah, anchorVerse)
+
+  if (direction === "desc") {
+    const startPage = Math.max(1, anchorPage - totalMemorizedPages + 1)
+    const startRef = getAyahByPageFloat(startPage)
+
+    return {
+      startPage,
+      endPage: anchorPage,
+      startSurahNumber: startRef.surah,
+      startVerseNumber: startRef.ayah,
+      endSurahNumber: anchorSurah,
+      endVerseNumber: anchorVerse,
+    }
+  }
+
+  const endPage = Math.min(604, anchorPage + totalMemorizedPages - 1)
+  const endRef = getInclusiveEndAyah(endPage + 1)
+
+  return {
+    startPage: anchorPage,
+    endPage,
+    startSurahNumber: anchorSurah,
+    startVerseNumber: anchorVerse,
+    endSurahNumber: endRef.surah,
+    endVerseNumber: endRef.ayah,
+  }
+}
+
+export function getJuzCoverageFromRange(pageRange?: { startPage: number; endPage: number } | null) {
+  const completedJuzs = new Set<number>()
+  const currentJuzs = new Set<number>()
+
+  if (!pageRange) {
+    return { completedJuzs, currentJuzs }
+  }
+
+  for (let juzNumber = 1; juzNumber <= 30; juzNumber += 1) {
+    const juzStartPage = JUZ_START_PAGES[juzNumber - 1]
+    const juzEndPage = JUZ_START_PAGES[juzNumber] ? JUZ_START_PAGES[juzNumber] - 1 : 604
+    const overlaps = pageRange.startPage <= juzEndPage && pageRange.endPage >= juzStartPage
+    const fullyCovered = pageRange.startPage <= juzStartPage && pageRange.endPage >= juzEndPage
+
+    if (fullyCovered) {
+      completedJuzs.add(juzNumber)
+    } else if (overlaps) {
+      currentJuzs.add(juzNumber)
+    }
+  }
+
+  return { completedJuzs, currentJuzs }
+}
+
 /**
  * إيجاد نطاق الصفحات لجلسة محددة (رقم الجلسة يبدأ من 1)
  */

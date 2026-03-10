@@ -162,12 +162,27 @@ export async function POST(request: Request) {
       rabt_pages,
     } = body
 
+    const { data: studentMemorizedData } = await supabase
+      .from("students")
+      .select("memorized_start_surah, memorized_start_verse, memorized_end_surah, memorized_end_verse")
+      .eq("id", student_id)
+      .maybeSingle()
+
+    const effectiveHasPrevious =
+      Boolean(has_previous) ||
+      Boolean(studentMemorizedData?.memorized_start_surah && studentMemorizedData?.memorized_end_surah)
+
+    const effectivePrevStartSurah = prev_start_surah || studentMemorizedData?.memorized_start_surah || null
+    const effectivePrevStartVerse = prev_start_verse || studentMemorizedData?.memorized_start_verse || null
+    const effectivePrevEndSurah = prev_end_surah || studentMemorizedData?.memorized_end_surah || null
+    const effectivePrevEndVerse = prev_end_verse || studentMemorizedData?.memorized_end_verse || null
+
     if (!student_id || !start_surah_number || !end_surah_number || !daily_pages) {
       return NextResponse.json({ error: "البيانات المطلوبة ناقصة" }, { status: 400 })
     }
 
-    if (has_previous) {
-      const expectedNextStart = getExpectedNextStart(prev_start_surah, prev_end_surah, prev_end_verse)
+    if (effectiveHasPrevious) {
+      const expectedNextStart = getExpectedNextStart(effectivePrevStartSurah, effectivePrevEndSurah, effectivePrevEndVerse)
       if (!expectedNextStart) {
         return NextResponse.json({ error: "بيانات الحفظ السابق غير مكتملة" }, { status: 400 })
       }
@@ -216,11 +231,11 @@ export async function POST(request: Request) {
         total_days: totalDays,
         start_date: start_date || new Date().toISOString().split("T")[0],
         direction: direction || "asc",
-        has_previous: has_previous || false,
-        prev_start_surah: prev_start_surah || null,
-        prev_start_verse: prev_start_verse || null,
-        prev_end_surah: prev_end_surah || null,
-        prev_end_verse: prev_end_verse || null,
+        has_previous: effectiveHasPrevious,
+        prev_start_surah: effectivePrevStartSurah,
+        prev_start_verse: effectivePrevStartVerse,
+        prev_end_surah: effectivePrevEndSurah,
+        prev_end_verse: effectivePrevEndVerse,
         muraajaa_pages: muraajaa_pages || null,
         rabt_pages: rabt_pages || null,
       }])

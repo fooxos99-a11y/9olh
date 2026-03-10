@@ -66,6 +66,10 @@ interface Student {
   name: string;
   halaqah: string;
   account_number: number;
+  memorized_start_surah?: number | null;
+  memorized_start_verse?: number | null;
+  memorized_end_surah?: number | null;
+  memorized_end_verse?: number | null;
 }
 
 interface StudentPlan {
@@ -345,13 +349,17 @@ export default function StudentPlansPage() {
     setPrevStartVerse("");
     setPrevEndVerse("");
 
-    setHasPrevious(false);
-    setPrevStartSurah("");
-    setPrevEndSurah("");
+    const hasStoredMemorized = !!(student.memorized_start_surah && student.memorized_end_surah);
+
+    setHasPrevious(hasStoredMemorized);
+    setPrevStartSurah(student.memorized_start_surah ? String(student.memorized_start_surah) : "");
+    setPrevEndSurah(student.memorized_end_surah ? String(student.memorized_end_surah) : "");
     setMuraajaaPages("20");
     setRabtPages("10");
     setPrevStartOpen(false);
     setPrevEndOpen(false);
+    setPrevStartVerse(student.memorized_start_verse ? String(student.memorized_start_verse) : "");
+    setPrevEndVerse(student.memorized_end_verse ? String(student.memorized_end_verse) : "");
 
     setAddDialogOpen(true);
   };

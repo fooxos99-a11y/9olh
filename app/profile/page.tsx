@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { User, Trophy, Award, Calendar, Star, BarChart3, Medal, Gem, Flame, Zap, Crown, Heart, BookMarked, CheckCircle2, Clock, BookOpen, Library, Check, PlayCircle, Lock } from "lucide-react"
-import { calculateCompletedPlanPages, calculateTotalPages, getPageForAyah, getSessionContent, getOffsetContent, SURAHS } from "@/lib/quran-data"
+import { getJuzCoverageFromRange, getPlanMemorizedRange, getSessionContent, getOffsetContent, getStoredMemorizedRange, SURAHS } from "@/lib/quran-data"
 import { Button } from "@/components/ui/button"
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog"
 import { ThemeSwitcher } from "@/components/theme-switcher"
@@ -32,64 +32,10 @@ interface StudentData {
   created_at: string
   completed_juzs?: number[]
   current_juzs?: number[]
-}
-
-const JUZ_START_PAGES = [1, 22, 42, 62, 82, 102, 122, 142, 162, 182, 202, 222, 242, 262, 282, 302, 322, 342, 362, 382, 402, 422, 442, 462, 482, 502, 522, 542, 562, 582]
-
-function getJuzPageRange(juzNumber: number) {
-  const startPage = JUZ_START_PAGES[juzNumber - 1]
-  const nextStartPage = JUZ_START_PAGES[juzNumber]
-
-  return {
-    startPage,
-    endPage: nextStartPage ? nextStartPage - 1 : 604,
-  }
-}
-
-function getMemorizedJuzs(plan: any, completedDays: number) {
-  if (!plan) return new Set<number>()
-
-  const direction = (plan.direction as "asc" | "desc") || "asc"
-  const previousPages = plan.has_previous && plan.prev_start_surah && plan.prev_end_surah
-    ? calculateTotalPages(
-        Number(plan.prev_start_surah),
-        Number(plan.prev_end_surah),
-        Number(plan.prev_start_verse) || 1,
-        Number(plan.prev_end_verse) || null,
-      )
-    : 0
-  const currentPlanPages = calculateCompletedPlanPages(
-    Number(plan.total_pages) || 0,
-    Number(plan.daily_pages) || 0,
-    completedDays,
-  )
-  const totalMemorizedPages = previousPages + currentPlanPages
-
-  if (totalMemorizedPages <= 0) return new Set<number>()
-
-  const anchorSurah = plan.has_previous && plan.prev_start_surah
-    ? Number(plan.prev_start_surah)
-    : Number(plan.start_surah_number)
-  const anchorVerse = plan.has_previous && plan.prev_start_surah
-    ? Number(plan.prev_start_verse) || 1
-    : Number(plan.start_verse) || 1
-  const anchorPage = getPageForAyah(anchorSurah, anchorVerse)
-
-  const memorizedStartPage = direction === "desc"
-    ? Math.max(1, anchorPage - totalMemorizedPages + 1)
-    : anchorPage
-  const memorizedEndPage = direction === "desc"
-    ? anchorPage
-    : Math.min(604, anchorPage + totalMemorizedPages - 1)
-
-  const juzs = new Set<number>()
-  for (let juzNumber = 1; juzNumber <= 30; juzNumber += 1) {
-    const { startPage, endPage } = getJuzPageRange(juzNumber)
-    const overlaps = memorizedStartPage <= endPage && memorizedEndPage >= startPage
-    if (overlaps) juzs.add(juzNumber)
-  }
-
-  return juzs
+  memorized_start_surah?: number | null
+  memorized_start_verse?: number | null
+  memorized_end_surah?: number | null
+  memorized_end_verse?: number | null
 }
 
 interface AttendanceRecord {
@@ -401,7 +347,22 @@ function ProfilePage() {
     return `${fromSurah} ${fromVerse} - ${toSurah} ${toVerse}`
   }
 
-  const memorizedJuzs = getMemorizedJuzs(planData, planCompletedDays)
+  const normalizedPlanData = planData
+    ? {
+        ...planData,
+        has_previous: planData.has_previous || !!(planData.prev_start_surah || studentData?.memorized_start_surah),
+        prev_start_surah: planData.prev_start_surah || studentData?.memorized_start_surah || null,
+        prev_start_verse: planData.prev_start_verse || studentData?.memorized_start_verse || null,
+        prev_end_surah: planData.prev_end_surah || studentData?.memorized_end_surah || null,
+        prev_end_verse: planData.prev_end_verse || studentData?.memorized_end_verse || null,
+      }
+    : null
+
+  const memorizedRange = normalizedPlanData
+    ? getPlanMemorizedRange(normalizedPlanData, planCompletedDays)
+    : getStoredMemorizedRange(studentData)
+
+  const { completedJuzs, currentJuzs } = getJuzCoverageFromRange(memorizedRange)
 
   return (
     <>
@@ -880,8 +841,8 @@ function ProfilePage() {
                   <CardContent className="pt-2 md:pt-3 space-y-4 md:space-y-6">
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                       {Array.from({ length: 30 }, (_, i) => i + 1).map((juzNum) => {
-                        const isCompleted = (studentData?.completed_juzs?.includes(juzNum) ?? false) || memorizedJuzs.has(juzNum);
-                        const isCurrent = studentData?.current_juzs?.includes(juzNum);
+                        const isCompleted = (studentData?.completed_juzs?.includes(juzNum) ?? false) || completedJuzs.has(juzNum);
+                        const isCurrent = (!isCompleted && currentJuzs.has(juzNum)) || (!!studentData?.current_juzs?.includes(juzNum) && !isCompleted);
                         
                         let bgColor = "bg-white";
                         let borderColor = "border-[#d8a355]/20";

@@ -70,6 +70,7 @@ interface AllUser {
 
 function AdminDashboard() {
   const { isLoading: authLoading, isVerified: authVerified } = useAdminAuth();
+  const [isMounted, setIsMounted] = useState(false)
 
   const [isLoading, setIsLoading] = useState(true)
   const [newStudentName, setNewStudentName] = useState("")
@@ -200,6 +201,10 @@ function AdminDashboard() {
   const { toast } = useToast()
 
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     const action = searchParams?.get("action")
@@ -972,6 +977,14 @@ function AdminDashboard() {
     setIsStudentManagementDialogOpen(false)
   }
 
+  if (!isMounted) {
+    return (
+      <div suppressHydrationWarning className="min-h-screen flex items-center justify-center bg-[#fafaf9]">
+        <SiteLoader size="md" />
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fafaf9]">
@@ -1151,6 +1164,19 @@ function AdminDashboard() {
                     <span className="text-neutral-300 group-hover:text-[#D4AF37] transition-colors text-xl leading-none">‹</span>
                   </button>
                 ))}
+
+                {canAccess("إنهاء الفصل") && (
+                  <button
+                    onClick={() => router.push("/admin/dashboard?action=end-semester")}
+                    className="w-full flex items-center justify-between px-6 py-5 hover:bg-[#D4AF37]/5 transition-colors duration-200 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-[#C9A961] group-hover:text-[#D4AF37] transition-colors" />
+                      <span className="text-base font-medium text-neutral-700">إنهاء الفصل</span>
+                    </div>
+                    <span className="text-neutral-300 group-hover:text-[#D4AF37] transition-colors text-xl leading-none">‹</span>
+                  </button>
+                )}
 
                 {canAccess("إدارة الألعاب") && (
                 <Dialog open={isGamesManagementDialogOpen} onOpenChange={setIsGamesManagementDialogOpen}>
@@ -1814,9 +1840,8 @@ function AdminDashboard() {
                               ? record.evaluations[record.evaluations.length - 1]
                               : null;
                             console.log('[DEBUG][Dashboard] آخر تقييم:', lastEval);
-                              if (authLoading || !authVerified) return (<div className="min-h-screen flex items-center justify-center bg-[#fafaf9]"><SiteLoader /></div>);
 
-  return (
+                            return (
                               <TableRow key={record.id}>
                                 <TableCell className="font-medium">
                                   {new Date(record.date).toLocaleDateString("ar-SA")}
