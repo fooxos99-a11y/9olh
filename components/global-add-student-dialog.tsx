@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAlertDialog } from "@/hooks/use-confirm-dialog"
 import { toast } from "@/hooks/use-toast"
+import { UserPlus } from "lucide-react"
 
 export function GlobalAddStudentDialog() {
   const router = useRouter()
@@ -116,11 +117,13 @@ export function GlobalAddStudentDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md bg-white rounded-2xl p-0 overflow-hidden [&>button]:top-4 [&>button]:right-4 [&>button]:left-auto" dir="rtl">
+      <DialogContent className="max-w-md bg-white rounded-2xl p-0 overflow-hidden [&>button]:hidden" dir="rtl">
         <DialogHeader className="px-6 py-5 border-b border-[#D4AF37]/30 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
-          <DialogTitle className="text-lg font-bold text-[#1a2332] flex items-center gap-2 pr-8">
-            <span className="w-8 h-8 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] text-base">＋</span>
-            إضافة طالب جديد
+          <DialogTitle className="flex w-full justify-start pr-2 text-right text-lg font-bold text-[#1a2332]">
+            <span className="inline-flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#C9A961]" />
+              <span>إضافة طالب جديد</span>
+            </span>
           </DialogTitle>
         </DialogHeader>
 

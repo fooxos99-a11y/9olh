@@ -185,11 +185,13 @@ export function GlobalCirclesDialog() {
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-4xl bg-white rounded-2xl p-0 overflow-hidden [&>button]:top-4 [&>button]:right-4 [&>button]:left-auto" dir="rtl">
           <DialogHeader className="px-6 py-5 border-b border-[#D4AF37]/30 bg-gradient-to-r from-[#D4AF37]/8 to-transparent text-right">
-            <DialogTitle className="text-lg font-bold text-[#1a2332] flex items-center gap-2 pr-8">
-              <span className="w-8 h-8 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
-                <Settings className="w-4 h-4" />
+            <DialogTitle className="flex w-full justify-start pr-8 text-right text-lg font-bold text-[#1a2332]">
+              <span className="inline-flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                  <Settings className="w-4 h-4" />
+                </span>
+                <span>إدارة الحلقات</span>
               </span>
-              إدارة الحلقات
             </DialogTitle>
             <div className="absolute left-6 top-5">
               <Button onClick={() => setIsAddDialogOpen(true)} className="bg-[#D4AF37] hover:bg-[#B4952F] text-white gap-2">

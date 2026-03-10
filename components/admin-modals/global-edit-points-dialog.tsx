@@ -101,11 +101,13 @@ export function GlobalEditPointsDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px] [&>button]:hidden" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl text-[#1a2332] flex items-center gap-2">
-            <Award className="w-5 h-5 text-[#D4AF37]" />
-            تعديل نقاط الطالب
+          <DialogTitle className="flex w-full justify-start text-right text-xl text-[#1a2332]">
+            <span className="inline-flex items-center gap-2">
+              <Award className="w-5 h-5 text-[#D4AF37]" />
+              <span>تعديل نقاط الطالب</span>
+            </span>
           </DialogTitle>
           <DialogDescription className="text-sm text-neutral-500">اختر الطالب لتعديل رصيد نقاطه</DialogDescription>
         </DialogHeader>
@@ -154,7 +156,7 @@ export function GlobalEditPointsDialog() {
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => handleClose(false)} className="text-sm h-9 rounded-lg border-[#D4AF37]/50 text-neutral-600">إلغاء</Button>
-          <Button onClick={handleSavePoints} className="bg-[#D4AF37] hover:bg-[#C9A961] text-white text-sm h-9 rounded-lg font-medium" disabled={!editingStudentPoints || !newPoints || isSubmitting}>
+          <Button variant="outline" onClick={handleSavePoints} className="text-sm h-9 rounded-lg border-[#D4AF37]/50 text-neutral-600" disabled={!editingStudentPoints || !newPoints || isSubmitting}>
             {isSubmitting ? "جاري الحفظ..." : "حفظ النقاط"}
           </Button>
         </div>

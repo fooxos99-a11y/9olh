@@ -50,9 +50,11 @@ export function GlobalEndSemesterDialog() {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[460px] [&>button]:hidden" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl text-[#1a2332]">
-            <Calendar className="h-5 w-5 text-[#D4AF37]" />
-            إنهاء الفصل
+          <DialogTitle className="flex w-full justify-start text-right text-xl text-[#1a2332]">
+            <span className="inline-flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[#D4AF37]" />
+              <span>إنهاء الفصل</span>
+            </span>
           </DialogTitle>
           <DialogDescription className="text-sm text-neutral-500">
             هل تريد إنهاء الفصل؟ سيُصفّر هذا الإجراء نقاط الطلاب ويحفظ الخطط الحالية كمحفوظ سابق ثم يحذف الخطط النشطة.

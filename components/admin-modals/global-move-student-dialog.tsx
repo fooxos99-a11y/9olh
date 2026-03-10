@@ -129,11 +129,13 @@ export function GlobalMoveStudentDialog() {
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-[425px]" dir="rtl">
+			<DialogContent className="sm:max-w-[425px] [&>button]:hidden" dir="rtl">
 				<DialogHeader>
-					<DialogTitle className="text-xl text-[#1a2332] flex items-center gap-2">
-						<ArrowRightLeft className="w-5 h-5 text-[#D4AF37]" />
-						نقل طالب
+					<DialogTitle className="flex w-full justify-start text-right text-xl text-[#1a2332]">
+						<span className="inline-flex items-center gap-2">
+							<ArrowRightLeft className="w-5 h-5 text-[#D4AF37]" />
+							<span>نقل طالب</span>
+						</span>
 					</DialogTitle>
 					<DialogDescription className="text-sm text-neutral-500">اختر الحلقة الحالية، ثم الطالب، ثم الحلقة المراد نقله إليها</DialogDescription>
 				</DialogHeader>

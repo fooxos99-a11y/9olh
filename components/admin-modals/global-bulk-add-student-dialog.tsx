@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
+import { UserPlus } from "lucide-react"
 
 export function GlobalBulkAddStudentDialog() {
   const router = useRouter()
@@ -81,10 +82,14 @@ export function GlobalBulkAddStudentDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto [&>button]:top-4 [&>button]:right-4 [&>button]:left-auto" dir="rtl">
+      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto [&>button]:hidden" dir="rtl">
         <DialogHeader className="text-right pr-8">
-          <DialogTitle className="text-xl text-[#1a2332]">إضافة جماعية للطلاب</DialogTitle>
-          <DialogDescription className="text-sm text-neutral-500 mb-2">اختر الحلقة ثم أدخل بيانات الطلاب</DialogDescription>
+          <DialogTitle className="flex w-full justify-start text-right text-xl text-[#1a2332]">
+            <span className="inline-flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#C9A961]" />
+              <span>إضافة جماعية للطلاب</span>
+            </span>
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           {/* اختيار الحلقة */}

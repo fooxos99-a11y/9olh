@@ -133,11 +133,13 @@ export function GlobalRemoveStudentDialog() {
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-[425px]" dir="rtl">
-				<DialogHeader className="space-y-0">
-					<DialogTitle className="pr-6 -mt-1 text-xl text-[#1a2332] flex items-center gap-2">
-						<UserMinus className="w-5 h-5 text-[#C9A961]" />
-						إزالة طالب
+			<DialogContent className="sm:max-w-[425px] [&>button]:hidden" dir="rtl">
+				<DialogHeader className="space-y-0 text-right">
+					<DialogTitle className="flex w-full justify-start text-right text-xl text-[#1a2332]">
+						<span className="inline-flex items-center gap-2">
+							<UserMinus className="w-5 h-5 text-[#C9A961]" />
+							<span>إزالة طالب</span>
+						</span>
 					</DialogTitle>
 				</DialogHeader>
 				<div className="grid gap-4 py-4">
