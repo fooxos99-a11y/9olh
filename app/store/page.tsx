@@ -8,7 +8,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SiteLoader } from "@/components/ui/site-loader"
-import { ShoppingBag, CircleDollarSign, Palette } from 'lucide-react'
+import { ShoppingBag, Palette } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { getSupabase } from "@/lib/supabase"
 
@@ -26,6 +26,63 @@ const THEME_COLORS: Record<string, { primary: string; secondary: string; tertiar
   galaxy:      { primary: '#7c3aed', secondary: '#a78bfa', tertiary: '#c4b5fd' },
   sunset_gold: { primary: '#f59e0b', secondary: '#d97706', tertiary: '#b45309' },
   ocean_deep:  { primary: '#0284c7', secondary: '#06b6d4', tertiary: '#22d3ee' },
+}
+
+function StarCoinIcon({ size = 96, className = "" }: { size?: number; className?: string }) {
+  const starPath = "M50 18 L58.5 35.5 L78 38.5 L64 52 L67.5 72 L50 62.5 L32.5 72 L36 52 L22 38.5 L41.5 35.5 Z"
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="coinOuter" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(35 26) rotate(48) scale(68)">
+          <stop offset="0" stopColor="#FFF7A8" />
+          <stop offset="0.42" stopColor="#FFD74F" />
+          <stop offset="1" stopColor="#F0A300" />
+        </radialGradient>
+        <linearGradient id="coinInner" x1="18" y1="12" x2="84" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#F7DD69" />
+          <stop offset="0.45" stopColor="#F0BB18" />
+          <stop offset="1" stopColor="#E39B00" />
+        </linearGradient>
+        <linearGradient id="coinRim" x1="14" y1="12" x2="86" y2="90" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFF8A6" />
+          <stop offset="0.5" stopColor="#F7D64E" />
+          <stop offset="1" stopColor="#F0AF17" />
+        </linearGradient>
+        <linearGradient id="starFill" x1="30" y1="20" x2="68" y2="76" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFFDE6" />
+          <stop offset="0.55" stopColor="#F8E98B" />
+          <stop offset="1" stopColor="#E8C84A" />
+        </linearGradient>
+        <filter id="coinShadow" x="2" y="4" width="96" height="96" filterUnits="userSpaceOnUse">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#A85F00" floodOpacity="0.14" />
+        </filter>
+      </defs>
+
+      <g filter="url(#coinShadow)">
+        <circle cx="50" cy="50" r="45" fill="url(#coinOuter)" />
+        <circle cx="50" cy="50" r="38" fill="url(#coinRim)" />
+        <circle cx="50" cy="50" r="34" fill="url(#coinInner)" />
+
+        <ellipse cx="42" cy="24" rx="17" ry="9" fill="#FFF9C9" opacity="0.28" />
+        <path d="M17 20C24 16 36 12 49 12" stroke="#FFF6A8" strokeWidth="4" strokeLinecap="round" opacity="0.2" />
+
+        <g transform="translate(50 50) scale(0.88) translate(-50 -50)">
+          <path d={starPath} fill="#C77A00" opacity="0.38" transform="translate(1.6 2.6)" />
+          <path d={starPath} fill="url(#starFill)" />
+          <path d={starPath} stroke="#FFF8D1" strokeWidth="1.5" opacity="0.95" />
+        </g>
+      </g>
+    </svg>
+  )
 }
 
 export default function StorePage() {
@@ -138,7 +195,6 @@ export default function StorePage() {
               <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-[#d8a355]" />
               <h1 className="text-3xl md:text-5xl font-bold text-[#1a2332]">المتجر</h1>
             </div>
-            <p className="text-base md:text-lg text-gray-600">استخدم نقاطك لشراء منتجات مميزة</p>
           </div>
 
           {/* Points Card */}
@@ -147,25 +203,21 @@ export default function StorePage() {
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#d8a355]/10 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-36 h-36 bg-[#d8a355]/8 rounded-full translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col items-center justify-center p-2 md:p-4">
-              {/* Coin circle */}
-              <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-4"
-                style={{ background: 'linear-gradient(145deg, #f5c96a, #b8843a)', boxShadow: '0 0 24px 6px rgba(216,163,85,0.4), inset 0 2px 4px rgba(255,255,255,0.3)' }}>
-                <div className="absolute inset-1 rounded-full border border-white/20" />
-                <CircleDollarSign className="w-7 h-7 md:w-9 md:h-9 text-[#3d2000]" strokeWidth={2.5} />
-              </div>
+            <div className="relative z-10 flex flex-col items-center justify-center gap-4 p-2 md:p-4 text-center">
+              <div className="flex items-center justify-center gap-2 md:gap-3">
+                <div
+                  className="shrink-0 translate-y-[1px] md:translate-y-[2px] drop-shadow-[0_4px_10px_rgba(216,163,85,0.16)]"
+                  aria-hidden="true"
+                >
+                  <StarCoinIcon size={44} className="md:h-[52px] md:w-[52px] h-[44px] w-[44px]" />
+                </div>
 
-              {/* Points number */}
-              <div className="text-5xl md:text-6xl font-black leading-none tracking-tight"
-                style={{ color: '#f5c96a', textShadow: '0 0 30px rgba(216,163,85,0.6), 0 2px 0 rgba(0,0,0,0.4)' }}>
-                {studentPoints}
-              </div>
-
-              {/* Label */}
-              <div className="mt-2 flex items-center gap-1.5">
-                <div className="w-6 h-px bg-[#d8a355]/40" />
-                <p className="text-xs md:text-sm font-semibold tracking-widest opacity-70">نقطة متاحة للشراء</p>
-                <div className="w-6 h-px bg-[#d8a355]/40" />
+                <div
+                  className="text-5xl md:text-6xl font-black leading-[0.9] tracking-[-0.03em]"
+                  style={{ color: '#f5c96a', textShadow: '0 0 30px rgba(216,163,85,0.6), 0 2px 0 rgba(0,0,0,0.4)' }}
+                >
+                  {studentPoints}
+                </div>
               </div>
             </div>
           </div>
@@ -279,7 +331,7 @@ export default function StorePage() {
                                 </div>
                               ) : (
                               <button
-                                className="w-full py-3.5 rounded-xl text-base md:text-lg font-black transition-all duration-150 active:scale-95 hover:opacity-90 mt-1 flex items-center justify-center gap-2"
+                                className="w-full py-3.5 rounded-xl text-lg md:text-xl font-black transition-all duration-150 active:scale-95 hover:opacity-90 mt-1 flex items-center justify-center gap-2.5"
                                 style={{ background: 'linear-gradient(135deg, #00352f 0%, #00453e 100%)', color: '#f5c96a' }}
                                 onClick={async () => {
                                   const accountNumber = localStorage.getItem("accountNumber")
@@ -325,13 +377,8 @@ export default function StorePage() {
                                   }
                                 }}
                               >
-                                <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
-                                  style={{
-                                    background: 'radial-gradient(circle at 35% 30%, #fde68a 0%, #f5c96a 40%, #b8762a 100%)',
-                                  }}>
-                                  <span className="text-[8px] font-black" style={{ color: '#5a3000', display: 'inline-block', transform: 'rotate(-10deg)' }}>$</span>
-                                </div>
-                                {prod.price} نقطة
+                                <StarCoinIcon size={24} className="h-[24px] w-[24px] flex-shrink-0" />
+                                <span className="leading-none tracking-[-0.02em]">{prod.price}</span>
                               </button>
                               )}
                             </div>
@@ -345,24 +392,13 @@ export default function StorePage() {
             )}
           </div>
 
-          {/* Info Section */}
-          <div className="bg-[#faf9f6] rounded-xl md:rounded-2xl p-6 md:p-8 border-2 border-[#d8a355]/20">
-            <h2 className="text-xl md:text-2xl font-bold text-[#1a2332] mb-3 md:mb-4">كيف يعمل المتجر؟</h2>
-            <ul className="space-y-2 md:space-y-3 text-sm md:text-base text-gray-700">
-              <li className="flex items-start gap-2 md:gap-3">
-                <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-[#d8a355] mt-1 flex-shrink-0" />
-                <span>استخدم نقاطك المكتسبة من التحضير والإنجاز لشراء المنتجات</span>
-              </li>
-              <li className="flex items-start gap-2 md:gap-3">
-                <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-[#d8a355] mt-1 flex-shrink-0" />
-                <span>كل فئة لديها منتجات مختلفة ومميزة</span>
-              </li>
-              <li className="flex items-start gap-2 md:gap-3">
-                <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-[#d8a355] mt-1 flex-shrink-0" />
-                <span>نقاط ملفك الشخصي وترتيبك في اللائحة لا تتأثر بالشراء</span>
-              </li>
-            </ul>
+          <div className="-mt-4 md:-mt-6 mb-4 md:mb-6 ml-auto w-full max-w-3xl rounded-xl border border-[#d8a355]/20 bg-[#faf9f6] px-4 py-4 text-right shadow-sm md:px-5">
+            <div className="space-y-2 text-xs leading-7 text-[#4b5563] md:text-[15px] md:leading-8">
+              <p className="text-right">• استخدم نقاطك المكتسبة من التقييم والأنشطة لشراء المنتجات</p>
+              <p className="text-right">• نقاط ملفك الشخصي وترتيبك في اللائحة لا تتأثر بالشراء</p>
+            </div>
           </div>
+
         </div>
       </main>
 
