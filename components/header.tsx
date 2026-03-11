@@ -39,7 +39,6 @@ import {
   Phone,
   Banknote,
   BarChart3,
-  Lock,
   Trash2,
   BookMarked,
 } from "lucide-react";
@@ -105,22 +104,18 @@ function NavItem({
 
         ${indent ? "pr-8" : ""}
 
-        ${disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer"}
+        ${disabled ? "cursor-not-allowed opacity-55 hover:bg-transparent" : "cursor-pointer"}
 
-        ${gold ? "text-[#b5862c] hover:bg-[#d8a355]/12" : "text-[#1a2e2b] hover:bg-[#00312e]/7"}
-
-        ${disabled ? "hover:bg-transparent" : ""}`}
+        ${gold ? "text-[#b5862c] hover:bg-[#d8a355]/12" : "text-[#1a2e2b] hover:bg-[#00312e]/7"}`}
     >
       <Icon
         size={17}
         className={`flex-shrink-0 transition-all duration-200 group-hover:scale-110
           ${gold ? "text-[#d8a355]" : "text-[#00312e]/50 group-hover:text-[#00312e]/80"}
-          ${disabled ? "group-hover:scale-100 group-hover:text-inherit" : ""}`}
+          ${disabled ? "group-hover:scale-100 group-hover:text-[#00312e]/50" : ""}`}
       />
 
       <span className="flex-1 text-right leading-tight">{label}</span>
-
-      {disabled && <Lock size={14} className="flex-shrink-0 text-[#00312e]/45" />}
     </button>
   );
 }
