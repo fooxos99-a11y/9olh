@@ -4,8 +4,8 @@ export const dynamic = "force-dynamic";
 
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { getNextQuestionForAccount } from "../get-next-question";
 import { SiteLoader } from "@/components/ui/site-loader";
+import { createClient } from "@/lib/supabase/client";
 
 // قائمة الحروف الأساسية
 const BASE_LETTERS = [
@@ -13,6 +13,18 @@ const BASE_LETTERS = [
   "ج","ض","ل","ك","ي","س","أ","ت","ش","ق",
   "ر","ن","غ","ف","ب"
 ];
+
+type LetterHiveQuestion = {
+  id: string;
+  letter: string;
+  question: string;
+  answer: string;
+};
+
+type LetterHiveProgress = {
+  id: string | null;
+  lastQuestionIndex: number;
+};
 
 const shuffleArray = (array: string[]) => {
   return [...array].sort(() => Math.random() - 0.5);
@@ -51,31 +63,162 @@ function GameContent() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number | null>(null);
   const [currentQuestionDebugIdx, setCurrentQuestionDebugIdx] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [questionsByLetter, setQuestionsByLetter] = useState<Record<string, LetterHiveQuestion[]>>({});
+  const [progressByLetter, setProgressByLetter] = useState<Record<string, LetterHiveProgress>>({});
+  const [boardLoading, setBoardLoading] = useState(true);
+  const [questionLoading, setQuestionLoading] = useState(false);
+
+  const accountNumber = Number(searchParams?.get("account") || 1);
 
   useEffect(() => {
     setRandomLetters(shuffleArray(BASE_LETTERS));
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const preloadGameData = async () => {
+      setBoardLoading(true);
+
+      try {
+        const supabase = createClient();
+        const [{ data: questions, error: questionsError }, { data: progressRows, error: progressError }] = await Promise.all([
+          supabase.from("letter_hive_questions").select("id,letter,question,answer").order("id", { ascending: true }),
+          supabase
+            .from("letter_hive_progress")
+            .select("id,letter,last_question_index")
+            .eq("account_number", accountNumber),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (questionsError) {
+          console.error("Error fetching letter hive questions:", questionsError);
+          setQuestionsByLetter({});
+        } else {
+          const groupedQuestions = (questions || []).reduce<Record<string, LetterHiveQuestion[]>>((acc, row) => {
+            if (!acc[row.letter]) {
+              acc[row.letter] = [];
+            }
+            acc[row.letter].push(row);
+            return acc;
+          }, {});
+          setQuestionsByLetter(groupedQuestions);
+        }
+
+        if (progressError) {
+          console.error("Error fetching letter hive progress:", progressError);
+          setProgressByLetter({});
+        } else {
+          const progressMap = (progressRows || []).reduce<Record<string, LetterHiveProgress>>((acc, row) => {
+            acc[row.letter] = {
+              id: row.id,
+              lastQuestionIndex: row.last_question_index,
+            };
+            return acc;
+          }, {});
+          setProgressByLetter(progressMap);
+        }
+      } finally {
+        if (isMounted) {
+          setBoardLoading(false);
+        }
+      }
+    };
+
+    preloadGameData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [accountNumber]);
+
+  const persistProgress = async (letter: string, nextIndex: number, progressId: string | null) => {
+    try {
+      const supabase = createClient();
+
+      if (progressId) {
+        const { error } = await supabase
+          .from("letter_hive_progress")
+          .update({ last_question_index: nextIndex, updated_at: new Date().toISOString() })
+          .eq("id", progressId);
+
+        if (error) {
+          console.error("Error updating letter hive progress:", error);
+        }
+
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("letter_hive_progress")
+        .insert({ account_number: accountNumber, letter, last_question_index: nextIndex })
+        .select("id")
+        .single();
+
+      if (error) {
+        console.error("Error inserting letter hive progress:", error);
+        return;
+      }
+
+      if (data?.id) {
+        setProgressByLetter((prev) => ({
+          ...prev,
+          [letter]: {
+            id: data.id,
+            lastQuestionIndex: nextIndex,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Error persisting letter hive progress:", error);
+    }
+  };
+
   const handleHexClick = async (i: number) => {
-    if (hexes[i] || showWinModal) return;
+    if (hexes[i] || showWinModal || boardLoading || questionLoading) return;
+
     setTargetHex(i);
+    setShowQuestionModal(true);
+    setQuestionLoading(true);
     setShowAnswer(false);
     setCurrentAnswer(null);
-    const accountNumber = Number(searchParams?.get("account") || 1);
+    setCurrentQuestion(null);
+    setCurrentQuestionIndex(null);
+    setCurrentQuestionDebugIdx(null);
+
     const letter = randomLetters[i];
-    const qa = await getNextQuestionForAccount(accountNumber, letter);
-    if (qa) {
-      setCurrentQuestion(qa.question);
-      setCurrentAnswer(qa.answer);
-      setCurrentQuestionIndex(qa.id || null);
-      setCurrentQuestionDebugIdx(qa._debugIndex ?? null);
-    } else {
+    const questions = questionsByLetter[letter] || [];
+
+    if (questions.length === 0) {
       setCurrentQuestion("لا يوجد سؤال لهذا الحرف بعد.");
       setCurrentAnswer(null);
       setCurrentQuestionIndex(null);
       setCurrentQuestionDebugIdx(null);
+      setQuestionLoading(false);
+      return;
     }
-    setShowQuestionModal(true);
+
+    const progressEntry = progressByLetter[letter];
+    const nextIndex = progressEntry ? (progressEntry.lastQuestionIndex + 1) % questions.length : 0;
+    const nextQuestion = questions[nextIndex];
+
+    setCurrentQuestion(nextQuestion.question);
+    setCurrentAnswer(nextQuestion.answer);
+    setCurrentQuestionIndex(nextQuestion.id || null);
+    setCurrentQuestionDebugIdx(nextIndex);
+    setProgressByLetter((prev) => ({
+      ...prev,
+      [letter]: {
+        id: progressEntry?.id || null,
+        lastQuestionIndex: nextIndex,
+      },
+    }));
+    setQuestionLoading(false);
+
+    void persistProgress(letter, nextIndex, progressEntry?.id || null);
   };
 
   const handleShowAnswer = () => setShowAnswer(true);
@@ -259,6 +402,17 @@ function GameContent() {
               {renderHexGrid()}
             </svg>
           </div>
+          {boardLoading && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(255,255,255,0.01)",
+                borderRadius: "24px",
+                pointerEvents: "auto",
+              }}
+            />
+          )}
         </div>
         <TeamScoreCard name={team1} score={scoreRed} color="#df103a" side="right" />
       </div>
@@ -278,7 +432,11 @@ function GameContent() {
             }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: 24, fontSize: "1.3rem", color: "#2c3e50" }}>{currentQuestion}</h3>
+            {questionLoading ? (
+              <div style={{ minWidth: 280, minHeight: 80 }} />
+            ) : (
+              <>
+                <h3 style={{ marginBottom: 24, fontSize: "1.3rem", color: "#2c3e50" }}>{currentQuestion}</h3>
             {!showAnswer && currentAnswer && (
               <button onClick={handleShowAnswer} style={{ padding: "14px 40px", background: "#2c3e50", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", fontSize: "1.2rem", marginBottom: 16, marginTop: 32 }}>الإجابة</button>
             )}
@@ -289,6 +447,8 @@ function GameContent() {
                   <button onClick={() => { setShowQuestionModal(false); setShowTeamModal(true); assignColor("red"); }} style={{ padding: "14px 40px", background: "#df103a", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", fontSize: "1.2rem" }}>{team1}</button>
                   <button onClick={() => { setShowQuestionModal(false); setShowTeamModal(true); assignColor("green"); }} style={{ padding: "14px 40px", background: "#10dfb5", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", fontSize: "1.2rem" }}>{team2}</button>
                 </div>
+              </>
+            )}
               </>
             )}
           </div>

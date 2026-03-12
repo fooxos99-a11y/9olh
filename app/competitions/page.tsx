@@ -4,11 +4,63 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Gamepad2, Grid3x3, Puzzle, Lock, ChevronLeft, Swords } from "lucide-react"
+import { Gamepad2, Grid3x3, Puzzle, Lock, ChevronLeft, Swords, Loader2 } from "lucide-react"
+
+const games = [
+  {
+    id: "categories",
+    title: "لعبة الفئات",
+    description: "لعبة تنافسية بين فريقين مع 4 فئات مختلفة",
+    icon: Grid3x3,
+    available: true,
+    path: "/competitions/categories",
+  },
+  {
+    id: "auction",
+    title: "لعبة المزاد",
+    description: "لعبة تنافسية مع نظام النقاط والأسئلة العشوائية",
+    icon: Gamepad2,
+    available: true,
+    path: "/competitions/auction",
+  },
+  {
+    id: "guess-images",
+    title: "خمن الصورة",
+    description: "اكتشف معنى الصورة قبل الفريق الآخر للفوز",
+    icon: Puzzle,
+    available: true,
+    path: "/competitions/guess-images",
+  },
+  {
+    id: "letter-hive",
+    title: "خلية الحروف",
+    description: "لعبة تنافسية بين فريقين لتوصيل اللون من الجهتين للفوز",
+    icon: Grid3x3,
+    available: true,
+    path: "/competitions/letter-hive/teams",
+  },
+  {
+    id: "higher-lower",
+    title: "أعلى أو أقل",
+    description: "لعبة تحدي تعتمد على تخمين إذا كانت القيمة أعلى أو أقل من السابقة",
+    icon: Puzzle,
+    available: false,
+    path: "/competitions/higher-lower",
+  },
+  {
+    id: "millionaire-game",
+    title: "من سيربح المليون",
+    description: "لعبة ثقافية تعتمد على الإجابة عن أسئلة متدرجة الصعوبة للفوز بمليون",
+    icon: Lock,
+    available: false,
+    path: "/competitions/millionaire-game",
+  },
+]
 
 export default function CompetitionsPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [loadingGameId, setLoadingGameId] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -24,50 +76,28 @@ export default function CompetitionsPage() {
     setUserRole(role)
   }, [router])
 
-  const games = [
-    {
-      id: "categories",
-      title: "لعبة الفئات",
-      description: "لعبة تنافسية بين فريقين مع 4 فئات مختلفة",
-      icon: Grid3x3,
-      available: true,
-    },
-    {
-      id: "auction",
-      title: "لعبة المزاد",
-      description: "لعبة تنافسية مع نظام النقاط والأسئلة العشوائية",
-      icon: Gamepad2,
-      available: true,
-    },
-    {
-      id: "guess-images",
-      title: "خمن الصورة",
-      description: "اكتشف معنى الصورة قبل الفريق الآخر للفوز",
-      icon: Puzzle,
-      available: true,
-    },
-    {
-      id: "letter-hive",
-      title: "خلية الحروف",
-      description: "لعبة تنافسية بين فريقين لتوصيل اللون من الجهتين للفوز",
-      icon: Grid3x3,
-      available: true,
-    },
-    {
-      id: "higher-lower",
-      title: "أعلى أو أقل",
-      description: "لعبة تحدي تعتمد على تخمين إذا كانت القيمة أعلى أو أقل من السابقة",
-      icon: Puzzle,
-      available: false,
-    },
-    {
-      id: "millionaire-game",
-      title: "من سيربح المليون",
-      description: "لعبة ثقافية تعتمد على الإجابة عن أسئلة متدرجة الصعوبة للفوز بمليون",
-      icon: Lock,
-      available: false,
-    },
-  ]
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return
+    }
+
+    games.forEach((game) => {
+      if (game.available) {
+        router.prefetch(game.path)
+      }
+    })
+  }, [isLoggedIn, router])
+
+  const handleGameNavigation = (path: string, gameId: string) => {
+    if (loadingGameId) {
+      return
+    }
+
+    setLoadingGameId(gameId)
+    requestAnimationFrame(() => {
+      router.push(path)
+    })
+  }
 
   if (!isLoggedIn) {
     return null
@@ -94,16 +124,12 @@ export default function CompetitionsPage() {
               {games.map((game) => (
                 <button
                   key={game.id}
-                  disabled={!game.available}
+                  disabled={!game.available || loadingGameId !== null}
                   onClick={() => {
-                    if (game.id === "letter-hive") {
-                      router.push(`/competitions/letter-hive/teams`)
-                    } else {
-                      router.push(`/competitions/${game.id}`)
-                    }
+                    handleGameNavigation(game.path, game.id)
                   }}
                   className={`w-full flex items-center justify-between px-7 py-7 transition-colors text-right group ${
-                    game.available
+                    game.available && loadingGameId === null
                       ? "hover:bg-[#D4AF37]/5 cursor-pointer"
                       : "opacity-50 cursor-not-allowed"
                   }`}
@@ -124,9 +150,14 @@ export default function CompetitionsPage() {
                       <p className="text-base text-neutral-400 mt-1">{game.description}</p>
                     </div>
                   </div>
-                  {game.available && (
+                  {game.available && loadingGameId === game.id ? (
+                    <div className="flex items-center gap-2 shrink-0 mr-2 text-[#D4AF37]">
+                      <span className="text-sm font-medium">جاري التحميل...</span>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    </div>
+                  ) : game.available ? (
                     <ChevronLeft className="w-6 h-6 text-neutral-300 group-hover:text-[#D4AF37] transition-colors shrink-0 mr-2" />
-                  )}
+                  ) : null}
                 </button>
               ))}
             </div>
