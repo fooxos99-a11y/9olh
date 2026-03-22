@@ -30,7 +30,7 @@ const sizeVars: Record<SiteLoaderSize, CSSProperties> = {
 
 export function SiteLoader({
   className,
-  color = "#D4AF37",
+  color = "#7c3aed",
   size = "md",
   label = "Loading",
   text,
@@ -44,7 +44,7 @@ export function SiteLoader({
   return (
     <div
       className={cn(
-        fullScreen && "fixed inset-0 z-[9999] min-h-screen w-full flex items-center justify-center bg-[#fafaf9]",
+        fullScreen && "fixed inset-0 z-[9999] min-h-screen w-full flex items-center justify-center bg-[linear-gradient(180deg,#ffffff_0%,#faf7ff_48%,#ffffff_100%)]",
         className,
       )}
     >
@@ -58,7 +58,7 @@ export function SiteLoader({
             <span key={index} className="site-loader__dot" />
           ))}
         </div>
-        {text ? <p className="text-sm font-medium text-[#8b7355] text-center">{text}</p> : null}
+        {text ? <p className="text-sm font-medium text-[#6d28d9] text-center">{text}</p> : null}
       </div>
     </div>
   )

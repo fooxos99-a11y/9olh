@@ -7,15 +7,13 @@ export function HeroSection() {
     <section
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-white via-[#faf8f5] to-white px-4 sm:px-6 pt-0 pb-2 sm:pb-3"
     >
-      
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#d8a355] to-transparent opacity-50" />
 
-        <div className="relative flex flex-col items-center w-full mt-[-3rem] mb-0">
-  <div className="relative flex flex-col items-center w-full mt-[-3rem] mb-0">
+      <div className="relative flex flex-col items-center w-full mt-[-3rem] mb-0">
           <div className="absolute inset-0 bg-[#22C55E]/10 blur-3xl rounded-full" />
           <div className="relative flex flex-col items-center w-full">
             <Image
-              src="/قبس1.png"
+              src="/logo-hero.png"
               alt="قبس"
               width={320}
               height={320}
@@ -46,7 +44,6 @@ export function HeroSection() {
             </svg>
           </div>
         </div>
-      </div>
     </section>
   )
 }

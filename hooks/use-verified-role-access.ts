@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-type AllowedRole = "student" | "teacher" | "deputy_teacher" | "admin" | "supervisor"
+type AllowedRole = "student" | "subscriber" | "registered" | "admin"
 
 type VerifiedUser = {
   id: string
@@ -18,6 +18,16 @@ type VerifiedRoleAccessState = {
   isLoading: boolean
   isAuthorized: boolean
   user: VerifiedUser | null
+}
+
+const ADMIN_ROLE_ALIASES = ["مدير", "سكرتير", "مشرف تعليمي", "مشرف تربوي", "مشرف برامج"]
+
+function isRoleAllowed(role?: string | null, allowedRoles: AllowedRole[] = []) {
+  if (!role) {
+    return false
+  }
+
+  return allowedRoles.includes(role as AllowedRole) || ADMIN_ROLE_ALIASES.includes(role)
 }
 
 function clearStoredAuth() {
@@ -53,6 +63,8 @@ function syncStoredAuth(user: VerifiedUser) {
 
   if (user.role === "student") {
     localStorage.setItem("studentId", user.id)
+  } else {
+    localStorage.removeItem("studentId")
   }
 }
 
@@ -81,7 +93,7 @@ export function useVerifiedRoleAccess(
           const sessionData = await sessionResponse.json()
           const sessionUser = sessionData.user as VerifiedUser | undefined
 
-          if (sessionUser && allowedRoles.includes(sessionUser.role)) {
+          if (sessionUser && isRoleAllowed(sessionUser.role, allowedRoles)) {
             syncStoredAuth(sessionUser)
             if (!cancelled) {
               setState({ isLoading: false, isAuthorized: true, user: sessionUser })
@@ -108,7 +120,7 @@ export function useVerifiedRoleAccess(
           .eq("account_number", Number(normalizedAccountNumber))
           .maybeSingle()
 
-        if (userRow && allowedRoles.includes(userRow.role as AllowedRole)) {
+        if (userRow && isRoleAllowed(userRow.role as string, allowedRoles)) {
           const verifiedUser: VerifiedUser = {
             id: String(userRow.id),
             name: userRow.name || "",

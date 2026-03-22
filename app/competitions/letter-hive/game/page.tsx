@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { SiteLoader } from "@/components/ui/site-loader";
+import { GameFinishOverlay } from "@/components/games/game-finish-overlay";
 import { createClient } from "@/lib/supabase/client";
 
 // قائمة الحروف الأساسية
@@ -13,6 +14,17 @@ const BASE_LETTERS = [
   "ج","ض","ل","ك","ي","س","أ","ت","ش","ق",
   "ر","ن","غ","ف","ب"
 ];
+
+function shuffleLetters(letters: string[]) {
+  const shuffled = [...letters];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
 
 type LetterHiveQuestion = {
   id: string;
@@ -26,8 +38,10 @@ type LetterHiveProgress = {
   lastQuestionIndex: number;
 };
 
-const shuffleArray = (array: string[]) => {
-  return [...array].sort(() => Math.random() - 0.5);
+type SessionResponse = {
+  user?: {
+    accountNumber?: string;
+  } | null;
 };
 
 function getNeighbors(i: number): number[] {
@@ -67,12 +81,54 @@ function GameContent() {
   const [progressByLetter, setProgressByLetter] = useState<Record<string, LetterHiveProgress>>({});
   const [boardLoading, setBoardLoading] = useState(true);
   const [questionLoading, setQuestionLoading] = useState(false);
+  const [accountNumber, setAccountNumber] = useState<number | null>(null);
+  const [exhaustedLetter, setExhaustedLetter] = useState<string | null>(null);
+  const [resettingLetter, setResettingLetter] = useState(false);
 
-  const accountNumber = Number(searchParams?.get("account") || 1);
+  const accountFromQuery = searchParams?.get("account") || "";
 
   useEffect(() => {
-    setRandomLetters(shuffleArray(BASE_LETTERS));
+    setRandomLetters(shuffleLetters(BASE_LETTERS));
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const resolveAccountNumber = async () => {
+      const normalizeAccount = (value?: string | null) => {
+        const trimmed = String(value || "").trim();
+        if (!trimmed || !/^\d+$/.test(trimmed)) {
+          return null;
+        }
+
+        return Number(trimmed);
+      };
+
+      const fallbackAccount = normalizeAccount(
+        accountFromQuery || localStorage.getItem("account_number") || localStorage.getItem("accountNumber")
+      );
+
+      try {
+        const response = await fetch("/api/auth", { cache: "no-store" });
+        const data = (await response.json()) as SessionResponse;
+        const sessionAccount = normalizeAccount(data?.user?.accountNumber);
+
+        if (isMounted) {
+          setAccountNumber(sessionAccount ?? fallbackAccount);
+        }
+      } catch {
+        if (isMounted) {
+          setAccountNumber(fallbackAccount);
+        }
+      }
+    };
+
+    void resolveAccountNumber();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [accountFromQuery]);
 
   useEffect(() => {
     let isMounted = true;
@@ -82,13 +138,18 @@ function GameContent() {
 
       try {
         const supabase = createClient();
-        const [{ data: questions, error: questionsError }, { data: progressRows, error: progressError }] = await Promise.all([
+        const [{ data: questions, error: questionsError }, progressResult] = await Promise.all([
           supabase.from("letter_hive_questions").select("id,letter,question,answer").order("id", { ascending: true }),
-          supabase
-            .from("letter_hive_progress")
-            .select("id,letter,last_question_index")
-            .eq("account_number", accountNumber),
+          accountNumber === null
+            ? Promise.resolve({ data: [], error: null })
+            : supabase
+                .from("letter_hive_progress")
+                .select("id,letter,last_question_index")
+                .eq("account_number", accountNumber),
         ]);
+
+        const progressRows = progressResult.data;
+        const progressError = progressResult.error;
 
         if (!isMounted) {
           return;
@@ -136,6 +197,10 @@ function GameContent() {
   }, [accountNumber]);
 
   const persistProgress = async (letter: string, nextIndex: number, progressId: string | null) => {
+    if (accountNumber === null) {
+      return;
+    }
+
     try {
       const supabase = createClient();
 
@@ -177,6 +242,57 @@ function GameContent() {
     }
   };
 
+  const resetLetterQuestions = async () => {
+    if (!exhaustedLetter) {
+      return;
+    }
+
+    const letter = exhaustedLetter;
+    const questions = questionsByLetter[letter] || [];
+
+    if (questions.length === 0) {
+      setExhaustedLetter(null);
+      setShowQuestionModal(false);
+      return;
+    }
+
+    setResettingLetter(true);
+
+    try {
+      const progressEntry = progressByLetter[letter];
+
+      if (accountNumber !== null && progressEntry?.id) {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from("letter_hive_progress")
+          .delete()
+          .eq("id", progressEntry.id);
+
+        if (error) {
+          console.error("Error resetting letter hive progress:", error);
+        }
+      }
+
+      const firstQuestion = questions[0];
+
+      setProgressByLetter((prev) => {
+        const next = { ...prev };
+        delete next[letter];
+        return next;
+      });
+      setCurrentQuestion(firstQuestion.question);
+      setCurrentAnswer(firstQuestion.answer);
+      setCurrentQuestionIndex(firstQuestion.id || null);
+      setCurrentQuestionDebugIdx(0);
+      setShowAnswer(false);
+      setExhaustedLetter(null);
+
+      void persistProgress(letter, 0, null);
+    } finally {
+      setResettingLetter(false);
+    }
+  };
+
   const handleHexClick = async (i: number) => {
     if (hexes[i] || showWinModal || boardLoading || questionLoading) return;
 
@@ -188,6 +304,7 @@ function GameContent() {
     setCurrentQuestion(null);
     setCurrentQuestionIndex(null);
     setCurrentQuestionDebugIdx(null);
+    setExhaustedLetter(null);
 
     const letter = randomLetters[i];
     const questions = questionsByLetter[letter] || [];
@@ -197,18 +314,31 @@ function GameContent() {
       setCurrentAnswer(null);
       setCurrentQuestionIndex(null);
       setCurrentQuestionDebugIdx(null);
+      setExhaustedLetter(null);
       setQuestionLoading(false);
       return;
     }
 
     const progressEntry = progressByLetter[letter];
-    const nextIndex = progressEntry ? (progressEntry.lastQuestionIndex + 1) % questions.length : 0;
+    const nextIndex = progressEntry ? progressEntry.lastQuestionIndex + 1 : 0;
+
+    if (nextIndex >= questions.length) {
+      setCurrentQuestion("انتهت الأسئلة لهذا الحرف لهذا المستخدم.");
+      setCurrentAnswer(null);
+      setCurrentQuestionIndex(null);
+      setCurrentQuestionDebugIdx(null);
+      setExhaustedLetter(letter);
+      setQuestionLoading(false);
+      return;
+    }
+
     const nextQuestion = questions[nextIndex];
 
     setCurrentQuestion(nextQuestion.question);
     setCurrentAnswer(nextQuestion.answer);
     setCurrentQuestionIndex(nextQuestion.id || null);
     setCurrentQuestionDebugIdx(nextIndex);
+    setExhaustedLetter(null);
     setProgressByLetter((prev) => ({
       ...prev,
       [letter]: {
@@ -277,7 +407,7 @@ function GameContent() {
 
   const resetGame = () => {
     setHexes(Array(25).fill(null));
-    setRandomLetters(shuffleArray(BASE_LETTERS));
+    setRandomLetters(shuffleLetters(BASE_LETTERS));
     setShowWinModal(false);
   };
 
@@ -361,7 +491,7 @@ function GameContent() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #ffffff 0%, #faf7ff 45%, #ffffff 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", position: "relative" }}>
       
       <div 
         onMouseEnter={() => setIsHovered(true)}
@@ -369,8 +499,8 @@ function GameContent() {
         style={{ position: "absolute", top: "20px", right: "20px", zIndex: 50 }}
       >
         <div style={{
-          width: "24px", height: "24px", background: "#F5F5DC", border: "2px solid #d2d2b4", borderRadius: "50%",
-          display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#8b8b7a",
+          width: "24px", height: "24px", background: "#ecfdf3", border: "2px solid #86efac", borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#15803d",
           cursor: "pointer", fontWeight: "bold", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", transition: "transform 0.2s ease"
         }}>
           {"!"}
@@ -378,10 +508,10 @@ function GameContent() {
         {isHovered && (
           <div style={{
             position: "absolute", top: "30px", right: "0", whiteSpace: "nowrap", background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(5px)", padding: "8px 15px", borderRadius: "12px", border: "1px solid #d2d2b4",
+            backdropFilter: "blur(5px)", padding: "8px 15px", borderRadius: "12px", border: "1px solid #86efac",
             boxShadow: "0 10px 20px rgba(0,0,0,0.1)", fontSize: "0.85rem", color: "#555", fontWeight: "bold"
           }}>
-            اضغط على زر <span style={{ color: "#2c3e50" }}>F11</span> لملء الشاشة
+            اضغط على زر <span style={{ color: "#15803d" }}>F11</span> لملء الشاشة
           </div>
         )}
       </div>
@@ -437,6 +567,26 @@ function GameContent() {
             ) : (
               <>
                 <h3 style={{ marginBottom: 24, fontSize: "1.3rem", color: "#2c3e50" }}>{currentQuestion}</h3>
+            {exhaustedLetter && !currentAnswer && (
+              <button
+                onClick={() => {
+                  void resetLetterQuestions();
+                }}
+                style={{
+                  padding: "14px 32px",
+                  background: resettingLetter ? "#a78bfa" : "#7c3aed",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  cursor: resettingLetter ? "wait" : "pointer",
+                  fontWeight: "bold",
+                  fontSize: "1.05rem",
+                  marginBottom: 16,
+                }}
+              >
+                {resettingLetter ? "جارٍ إعادة الأسئلة..." : "إعادة الأسئلة"}
+              </button>
+            )}
             {!showAnswer && currentAnswer && (
               <button onClick={handleShowAnswer} style={{ padding: "14px 40px", background: "#2c3e50", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", fontSize: "1.2rem", marginBottom: 16, marginTop: 32 }}>الإجابة</button>
             )}
@@ -480,15 +630,24 @@ function GameContent() {
       )}
 
       {showWinModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 200 }}>
-          <div style={{ background: "white", padding: "50px", borderRadius: "30px", textAlign: "center", maxWidth: "400px" }}>
-            <div style={{ fontSize: "5rem", marginBottom: "10px" }}>🏆</div>
-            <h1 style={{ fontSize: "2.2rem", color: "#2c3e50", marginBottom: "10px" }}>انتهت الجولة!</h1>
-            <p style={{ fontSize: "1.5rem", color: "#666", marginBottom: "30px" }}>{winMessage}</p>
-            <button onClick={resetGame} style={{ width: "100%", padding: "15px", background: "#2c3e50", color: "white", border: "none", borderRadius: "15px", fontSize: "1.2rem", cursor: "pointer", fontWeight: "bold", marginBottom: "16px" }}>لعب مرة أخرى</button>
-            <button onClick={() => window.location.href = "/competitions"} style={{ width: "100%", padding: "13px", background: "#d8a355", color: "#fff", border: "none", borderRadius: "15px", fontSize: "1.1rem", cursor: "pointer", fontWeight: "bold" }}>العودة للرئيسية</button>
-          </div>
-        </div>
+        <GameFinishOverlay
+          title="انتهت الجولة!"
+          subtitle={winMessage}
+          maxWidthClassName="max-w-xl"
+          actions={[
+            {
+              label: "لعب مرة أخرى",
+              onClick: resetGame,
+            },
+            {
+              label: "العودة للرئيسية",
+              onClick: () => {
+                window.location.href = "/competitions";
+              },
+              tone: "outline",
+            },
+          ]}
+        />
       )}
     </div>
   );

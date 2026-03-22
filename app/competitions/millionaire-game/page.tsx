@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { SiteLoader } from "@/components/ui/site-loader"
-import { BarChart3, CheckCircle2, Clock3, PhoneCall, RefreshCcw, Trophy, XCircle } from "lucide-react"
+import { BarChart3, Clock3, PhoneCall, RefreshCcw, Trophy } from "lucide-react"
+import { GameFinishOverlay } from "@/components/games/game-finish-overlay"
 
 type Difficulty = "easy" | "medium" | "hard"
 
@@ -25,6 +26,7 @@ type ResultState = {
   title: string
   message: string
   amount: number
+  reason: "questions-exhausted" | null
 }
 
 type AudienceVote = {
@@ -157,11 +159,14 @@ export default function MillionaireGamePage() {
   const [phoneTimeLeft, setPhoneTimeLeft] = useState(100)
   const [audienceModalOpen, setAudienceModalOpen] = useState(false)
   const [audienceVotes, setAudienceVotes] = useState<AudienceVote[]>([])
+  const [exhaustedDifficulty, setExhaustedDifficulty] = useState<Difficulty | null>(null)
+  const [resettingQuestions, setResettingQuestions] = useState(false)
   const [result, setResult] = useState<ResultState>({
     status: "idle",
     title: "",
     message: "",
     amount: 0,
+    reason: null,
   })
 
   useEffect(() => {
@@ -233,6 +238,14 @@ export default function MillionaireGamePage() {
     }
 
     localStorage.setItem(usedQuestionsStorageKey(currentAccountKey, difficulty), JSON.stringify(questionIds))
+  }
+
+  const clearUsedQuestionsForDifficulty = (difficulty: Difficulty, currentAccountKey: string) => {
+    setUsedQuestionIds((prev) => ({
+      ...prev,
+      [difficulty]: [],
+    }))
+    setStoredUsedQuestions(difficulty, currentAccountKey, [])
   }
 
   const markQuestionAsUsed = async (difficulty: Difficulty, questionId: string) => {
@@ -333,24 +346,20 @@ export default function MillionaireGamePage() {
       let usedIds = usedQuestionIds[difficulty] || []
       let availableQuestions = allQuestionsForDifficulty.filter((question) => !usedIds.includes(question.id))
 
-      if (availableQuestions.length === 0 && allQuestionsForDifficulty.length > 0) {
-        await resetUsedQuestions(difficulty)
-        usedIds = []
-        setStoredUsedQuestions(difficulty, accountKey, [])
-        availableQuestions = [...allQuestionsForDifficulty]
-      }
-
       if (availableQuestions.length === 0) {
+        setExhaustedDifficulty(difficulty)
         setResult({
           status: "lost",
-          title: "لا توجد أسئلة كافية",
-          message: "أضف أسئلة جديدة في هذه الدرجة ثم أعد المحاولة.",
+          title: "انتهت الأسئلة",
+          message: "",
           amount: securedPrize,
+          reason: "questions-exhausted",
         })
         setCurrentQuestion(null)
         return
       }
 
+      setExhaustedDifficulty(null)
       const nextQuestion = availableQuestions[0]
       const nextUsedIds = [...usedIds, nextQuestion.id]
 
@@ -372,8 +381,27 @@ export default function MillionaireGamePage() {
   const startGame = async () => {
     setHasStarted(true)
     setFiftyUsed(false)
-    setResult({ status: "idle", title: "", message: "", amount: 0 })
+    setExhaustedDifficulty(null)
+    setResult({ status: "idle", title: "", message: "", amount: 0, reason: null })
     await prepareQuestion(0)
+  }
+
+  const handleResetQuestions = async () => {
+    if (!exhaustedDifficulty) {
+      return
+    }
+
+    setResettingQuestions(true)
+
+    try {
+      await resetUsedQuestions(exhaustedDifficulty)
+      clearUsedQuestionsForDifficulty(exhaustedDifficulty, accountKey)
+      setExhaustedDifficulty(null)
+      setResult({ status: "idle", title: "", message: "", amount: 0, reason: null })
+      await prepareQuestion(currentQuestionIndex)
+    } finally {
+      setResettingQuestions(false)
+    }
   }
 
   const handleAnswer = (optionNumber: number) => {
@@ -395,6 +423,7 @@ export default function MillionaireGamePage() {
             title: "مبروك!",
             message: "أجبت على جميع الأسئلة الصحيحة وفزت بالجائزة الكبرى.",
             amount: PRIZE_LADDER[currentQuestionIndex],
+            reason: null,
           })
           setCurrentQuestion(null)
           return
@@ -410,6 +439,7 @@ export default function MillionaireGamePage() {
         title: "انتهت اللعبة",
         message: `الإجابة الصحيحة كانت الخيار ${currentQuestion.correct_option}.`,
         amount: currentQuestionIndex > 0 ? PRIZE_LADDER[currentQuestionIndex - 1] : 0,
+        reason: null,
       })
       setCurrentQuestion(null)
     }, 900)
@@ -463,7 +493,8 @@ export default function MillionaireGamePage() {
     setPhoneTimeLeft(100)
     setAudienceModalOpen(false)
     setAudienceVotes([])
-    setResult({ status: "idle", title: "", message: "", amount: 0 })
+    setExhaustedDifficulty(null)
+    setResult({ status: "idle", title: "", message: "", amount: 0, reason: null })
   }
 
   if (loading) {
@@ -475,24 +506,24 @@ export default function MillionaireGamePage() {
     : []
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-[#faf8f5] via-[#f5ead8] to-[#ebe4d8] px-3 py-3 md:px-4 md:py-4">
+    <div dir="rtl" className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#faf7ff_45%,#ffffff_100%)] px-3 py-3 md:px-4 md:py-4">
       <div className={`mx-auto ${hasStarted ? "max-w-[1700px]" : "max-w-3xl"}`}>
         <div dir={hasStarted ? "ltr" : "rtl"} className={`grid grid-cols-1 ${hasStarted ? "gap-6 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-stretch" : ""}`}>
           <main dir="rtl" className={hasStarted ? "space-y-6 xl:order-1" : "flex min-h-[calc(100vh-2rem)] items-center justify-center xl:order-1"}>
             {!hasStarted ? (
-              <div className="w-full rounded-[32px] border border-white/50 bg-white/85 p-8 md:p-12 shadow-xl backdrop-blur">
+              <div className="w-full rounded-[32px] border border-[#7c3aed]/10 bg-white/90 p-8 md:p-12 shadow-[0_24px_80px_rgba(124,58,237,0.08)] backdrop-blur">
                 <div className="mx-auto max-w-xl text-center space-y-8">
                   <div className="space-y-4">
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#d8a355] to-[#c89547] text-white shadow-lg shadow-[#d8a355]/30">
+                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] text-white shadow-lg shadow-[#7c3aed]/25">
                       <Trophy className="h-10 w-10" />
                     </div>
-                    <h2 className="overflow-visible bg-gradient-to-r from-[#d8a355] to-[#c89547] bg-clip-text pb-3 text-4xl font-black leading-[1.2] text-transparent md:text-6xl">من سيربح المليون</h2>
+                    <h2 className="overflow-visible bg-gradient-to-r from-[#1f1147] to-[#7c3aed] bg-clip-text pb-3 text-4xl font-black leading-[1.2] text-transparent md:text-6xl">من سيربح المليون</h2>
                   </div>
 
                   <Button
                     onClick={startGame}
                     disabled={!hasEnoughQuestions}
-                    className="rounded-full bg-gradient-to-r from-[#d8a355] to-[#c89547] px-14 py-7 text-xl font-bold text-white shadow-lg shadow-[#d8a355]/30 hover:from-[#c89547] hover:to-[#b88437]"
+                    className="rounded-full bg-[#7c3aed] px-14 py-7 text-xl font-bold text-white shadow-lg shadow-[#7c3aed]/25 hover:bg-[#6d28d9]"
                   >
                     ابدأ اللعبة
                   </Button>
@@ -503,31 +534,33 @@ export default function MillionaireGamePage() {
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-[calc(100vh-2rem)] flex-col rounded-[32px] border border-white/50 bg-white/88 p-5 shadow-xl backdrop-blur md:p-8 xl:min-h-[calc(100vh-2rem)]">
+              <div className="relative flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-[32px] border border-[#7c3aed]/12 bg-white/88 p-5 shadow-[0_28px_90px_rgba(124,58,237,0.10)] backdrop-blur md:p-8 xl:min-h-[calc(100vh-2rem)]">
+                <div className="absolute left-0 top-0 h-40 w-40 rounded-full bg-[#ddd6fe]/55 blur-3xl" />
+                <div className="absolute bottom-0 right-0 h-44 w-44 rounded-full bg-[#c4b5fd]/35 blur-3xl" />
                 <div className="mb-4 grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-center" dir="ltr">
                   <div className="hidden md:block" />
 
-                  <div className="flex items-center justify-center gap-3 text-[#9e6f26] md:justify-self-center" dir="rtl">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#d8a355] to-[#c89547] text-white shadow-md shadow-[#d8a355]/25">
+                  <div className="relative flex items-center justify-center gap-3 text-[#6d28d9] md:justify-self-center" dir="rtl">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] text-white shadow-md shadow-[#7c3aed]/25">
                       <Clock3 className="h-5 w-5" />
                     </div>
                     <p className="text-[28px] font-black leading-none">{timeLeft}</p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 md:justify-self-end">
+                  <div className="relative flex flex-wrap items-center gap-3 md:justify-self-end">
                     <div className="group relative">
                       <Button
                         variant="outline"
                         onClick={handleFiftyFifty}
                         disabled={fiftyUsed || !currentQuestion || answerState !== "idle"}
                         aria-label="حذف خيارين"
-                        className="flex h-16 min-w-[72px] items-center justify-center rounded-[24px] border-[#d8a355]/35 bg-gradient-to-br from-[#fffaf1] via-[#f4e4c8] to-[#e7cfab] shadow-[0_12px_24px_rgba(166,122,51,0.16)] hover:from-[#fff7e7] hover:via-[#f2dfbe] hover:to-[#dcc094] disabled:opacity-50"
+                        className="flex h-16 min-w-[72px] items-center justify-center rounded-[24px] border-[#cbb9fa] bg-gradient-to-br from-[#ffffff] via-[#f6f1ff] to-[#ebe2ff] shadow-[0_12px_24px_rgba(124,58,237,0.12)] hover:from-[#fcfbff] hover:via-[#f3edff] hover:to-[#e7dcff] disabled:opacity-50"
                       >
-                        <span className="text-[26px] font-black leading-none tracking-[-0.04em] text-[#7b5620]" dir="ltr">
+                        <span className="text-[26px] font-black leading-none tracking-[-0.04em] text-[#6d28d9]" dir="ltr">
                           50/50
                         </span>
                       </Button>
-                      <div className="pointer-events-none absolute -bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-[#f4e4c8] border border-[#d8a355]/40 px-4 py-2 text-base font-bold text-[#7b5620] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 z-50">
+                      <div className="pointer-events-none absolute -bottom-14 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-[#d9d2f6] bg-white px-4 py-2 text-base font-bold text-[#6d28d9] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                         حذف خيارين
                       </div>
                     </div>
@@ -538,11 +571,11 @@ export default function MillionaireGamePage() {
                         onClick={handlePhoneFriend}
                         disabled={phoneUsed || !currentQuestion || answerState !== "idle"}
                         aria-label="اتصال بصديق"
-                        className="flex h-16 min-w-[72px] items-center justify-center rounded-[24px] border-[#d8a355]/35 bg-gradient-to-br from-[#fffaf1] via-[#f4e4c8] to-[#e7cfab] shadow-[0_12px_24px_rgba(166,122,51,0.16)] hover:from-[#fff7e7] hover:via-[#f2dfbe] hover:to-[#dcc094] disabled:opacity-50 [&_svg]:!w-9 [&_svg]:!h-9"
+                        className="flex h-16 min-w-[72px] items-center justify-center rounded-[24px] border-[#cbb9fa] bg-gradient-to-br from-[#ffffff] via-[#f6f1ff] to-[#ebe2ff] shadow-[0_12px_24px_rgba(124,58,237,0.12)] hover:from-[#fcfbff] hover:via-[#f3edff] hover:to-[#e7dcff] disabled:opacity-50 [&_svg]:!w-9 [&_svg]:!h-9"
                       >
-                        <PhoneCall style={{ width: "34px", height: "34px" }} className="text-[#7b5620]" />
+                        <PhoneCall style={{ width: "34px", height: "34px" }} className="text-[#6d28d9]" />
                       </Button>
-                      <div className="pointer-events-none absolute -bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-[#f4e4c8] border border-[#d8a355]/40 px-4 py-2 text-base font-bold text-[#7b5620] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 z-50">
+                      <div className="pointer-events-none absolute -bottom-14 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-[#d9d2f6] bg-white px-4 py-2 text-base font-bold text-[#6d28d9] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                         الإتصال بصديق
                       </div>
                     </div>
@@ -553,11 +586,11 @@ export default function MillionaireGamePage() {
                         onClick={handleAudiencePoll}
                         disabled={audienceUsed || !currentQuestion || answerState !== "idle"}
                         aria-label="تصويت الجمهور"
-                        className="flex h-16 min-w-[72px] items-center justify-center rounded-[24px] border-[#d8a355]/35 bg-gradient-to-br from-[#fffaf1] via-[#f4e4c8] to-[#e7cfab] shadow-[0_12px_24px_rgba(166,122,51,0.16)] hover:from-[#fff7e7] hover:via-[#f2dfbe] hover:to-[#dcc094] disabled:opacity-50 [&_svg]:!w-9 [&_svg]:!h-9"
+                        className="flex h-16 min-w-[72px] items-center justify-center rounded-[24px] border-[#cbb9fa] bg-gradient-to-br from-[#ffffff] via-[#f6f1ff] to-[#ebe2ff] shadow-[0_12px_24px_rgba(124,58,237,0.12)] hover:from-[#fcfbff] hover:via-[#f3edff] hover:to-[#e7dcff] disabled:opacity-50 [&_svg]:!w-9 [&_svg]:!h-9"
                       >
-                        <BarChart3 style={{ width: "34px", height: "34px" }} className="text-[#7b5620]" />
+                        <BarChart3 style={{ width: "34px", height: "34px" }} className="text-[#6d28d9]" />
                       </Button>
-                      <div className="pointer-events-none absolute -bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-[#f4e4c8] border border-[#d8a355]/40 px-4 py-2 text-base font-bold text-[#7b5620] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 z-50">
+                      <div className="pointer-events-none absolute -bottom-14 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-[#d9d2f6] bg-white px-4 py-2 text-base font-bold text-[#6d28d9] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                         تصويت الجمهور
                       </div>
                     </div>
@@ -571,8 +604,8 @@ export default function MillionaireGamePage() {
                 ) : currentQuestion ? (
                   <>
                     <div className="flex flex-1 flex-col gap-5">
-                      <div className="rounded-[28px] border border-[#e9d9b9] bg-gradient-to-br from-[#fffaf0] to-[#f7efe1] p-6 text-center shadow-sm md:p-8">
-                        <p className="text-2xl font-black leading-[1.9] text-[#1a2332] md:text-4xl">{currentQuestion.question}</p>
+                      <div className="rounded-[28px] border border-[#d9d2f6] bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ff_100%)] p-6 text-center shadow-[0_18px_45px_rgba(124,58,237,0.08)] md:p-8">
+                        <p className="text-2xl font-black leading-[1.9] text-[#1f1147] md:text-4xl">{currentQuestion.question}</p>
                       </div>
 
                       <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
@@ -582,14 +615,14 @@ export default function MillionaireGamePage() {
                           const isCorrect = currentQuestion.correct_option === optionNumber
                           const isSelected = selectedOption === optionNumber
 
-                          let optionClass = "border-[#e8dbc1] bg-white text-[#1a2332] hover:border-[#d8a355] hover:bg-[#fff7e8]"
+                          let optionClass = "border-[#ddd5fb] bg-white text-[#1f1147] hover:border-[#a78bfa] hover:bg-[#faf7ff]"
                           if (answerState !== "idle") {
                             if (isCorrect) {
                               optionClass = "border-emerald-300 bg-emerald-50 text-emerald-700"
                             } else if (isSelected) {
                               optionClass = "border-red-300 bg-red-50 text-red-700"
                             } else {
-                              optionClass = "border-[#ece4d3] bg-[#faf6ef] text-slate-400"
+                              optionClass = "border-[#ebe5fb] bg-[#f7f5ff] text-slate-400"
                             }
                           }
 
@@ -598,12 +631,12 @@ export default function MillionaireGamePage() {
                               key={optionNumber}
                               onClick={() => handleAnswer(optionNumber)}
                               disabled={isHidden || answerState !== "idle"}
-                              className={`min-h-[104px] rounded-[26px] border p-5 text-right shadow-sm transition-all md:min-h-[128px] flex items-center ${
+                              className={`min-h-[104px] rounded-[26px] border p-5 text-right shadow-[0_14px_32px_rgba(124,58,237,0.06)] transition-all md:min-h-[128px] flex items-center ${
                                 isHidden ? "pointer-events-none opacity-0" : optionClass
                               }`}
                             >
                               <div className="flex w-full items-center gap-4">
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#d8a355] to-[#c89547] text-xl font-black text-white shadow-md shadow-[#d8a355]/20 md:h-14 md:w-14 md:text-2xl">{optionNumber}</span>
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] text-xl font-black text-white shadow-md shadow-[#7c3aed]/20 md:h-14 md:w-14 md:text-2xl">{optionNumber}</span>
                                 <span className="text-xl font-bold leading-8 md:text-3xl">{option}</span>
                               </div>
                             </button>
@@ -620,11 +653,11 @@ export default function MillionaireGamePage() {
           {hasStarted ? (
             <aside dir="ltr" className="relative hidden xl:flex xl:order-2 xl:h-[calc(100vh-2rem)] xl:items-stretch xl:justify-center">
               <div className="relative h-full w-full max-w-[220px]">
-                <div className="absolute inset-y-0 left-1/2 w-[150px] -translate-x-1/2 rounded-[999px] bg-gradient-to-r from-[#6f7898] via-[#edf1fb] to-[#6b7595] p-[6px] shadow-[0_20px_40px_rgba(80,88,120,0.28)]">
-                  <div className="relative h-full w-full overflow-hidden rounded-[999px] bg-gradient-to-b from-[#8e95b0] via-[#cfd6e8] to-[#7c86a7]">
-                    <div className="absolute inset-x-[8px] bottom-[8px] top-[8px] rounded-[999px] bg-gradient-to-b from-[#a4abc3] via-[#e8edf9] to-[#8d97b8]" />
+                <div className="absolute inset-y-0 left-1/2 w-[150px] -translate-x-1/2 rounded-[999px] bg-gradient-to-r from-[#8370b8] via-[#f3efff] to-[#7a66b0] p-[6px] shadow-[0_20px_40px_rgba(91,33,182,0.22)]">
+                  <div className="relative h-full w-full overflow-hidden rounded-[999px] bg-gradient-to-b from-[#9d91cf] via-[#e5ddfb] to-[#8475bb]">
+                    <div className="absolute inset-x-[8px] bottom-[8px] top-[8px] rounded-[999px] bg-gradient-to-b from-[#b2a7dd] via-[#f8f6ff] to-[#9486ca]" />
                     <div
-                      className="absolute bottom-[10px] left-[10px] right-[10px] rounded-[999px] bg-gradient-to-t from-[#eea400] via-[#ffc927] to-[#ffe27a] shadow-[0_0_22px_rgba(255,198,27,0.32)] transition-all duration-700 ease-out"
+                      className="absolute bottom-[10px] left-[10px] right-[10px] rounded-[999px] bg-gradient-to-t from-[#5b21b6] via-[#7c3aed] to-[#c4b5fd] shadow-[0_0_22px_rgba(124,58,237,0.32)] transition-all duration-700 ease-out"
                       style={{ height: progressFillHeight(currentQuestionIndex), bottom: "8px", left: "8px", right: "8px" }}
                     />
                     <div className="absolute inset-x-[10px] bottom-[10px] top-[10px] rounded-[999px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]" />
@@ -642,7 +675,7 @@ export default function MillionaireGamePage() {
                             <span
                               className={`text-[15px] font-black leading-none tracking-[0.01em] transition-colors ${
                                 isCompleted
-                                  ? "text-[#8b5c10]"
+                                  ? "text-[#ffffff]"
                                   : "text-[#475569]"
                               }`}
                             >
@@ -662,42 +695,57 @@ export default function MillionaireGamePage() {
       </div>
 
       {result.status !== "idle" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[32px] bg-white p-8 text-center shadow-2xl">
-            <div className={`mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full ${result.status === "won" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-              {result.status === "won" ? <CheckCircle2 className="h-10 w-10" /> : <XCircle className="h-10 w-10" />}
-            </div>
-            <h2 className="text-3xl font-black text-slate-900">{result.title}</h2>
-            <p className="mt-3 text-lg leading-8 text-slate-600">{result.message}</p>
+        <GameFinishOverlay
+          title={result.title}
+          subtitle={result.message}
+          celebration={result.status === "won"}
+          maxWidthClassName="max-w-xl"
+          details={
             <div className="mt-6 rounded-3xl bg-slate-50 p-5">
               <p className="text-sm font-bold text-slate-500">نتيجتك النهائية</p>
-              <p className="mt-2 text-4xl font-black text-[#b5862c]">{formatAmount(result.amount)}</p>
+              <p className="mt-2 text-4xl font-black text-[#7c3aed]">{formatAmount(result.amount)}</p>
             </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button onClick={resetGame} className="flex-1 rounded-full bg-[#d8a355] py-6 text-white hover:bg-[#c89547]">
-                <RefreshCcw className="ml-2 h-5 w-5" />
-                لعب مرة أخرى
-              </Button>
-              <Button variant="outline" onClick={() => { window.location.href = "/competitions" }} className="flex-1 rounded-full py-6">
-                العودة للمسابقات
-              </Button>
-            </div>
-          </div>
-        </div>
+          }
+          actions={[
+            ...(result.reason === "questions-exhausted"
+              ? [
+                  {
+                    label: resettingQuestions ? "جارٍ إعادة الأسئلة..." : "إعادة الأسئلة",
+                    onClick: () => {
+                      void handleResetQuestions()
+                    },
+                    tone: "primary" as const,
+                  },
+                ]
+              : []),
+            {
+              label: "لعب مرة أخرى",
+              onClick: resetGame,
+              icon: <RefreshCcw className="ml-2 h-5 w-5" />,
+            },
+            {
+              label: "العودة للمسابقات",
+              onClick: () => {
+                window.location.href = "/competitions"
+              },
+              tone: "outline",
+            },
+          ]}
+        />
       )}
 
       {phoneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm" onClick={() => setPhoneModalOpen(false)}>
-          <div className="w-full max-w-lg rounded-[32px] border border-[#ead7b2] bg-gradient-to-br from-[#fffaf1] via-[#f9ecd6] to-[#f2dfbd] p-8 text-center shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#d8a355] to-[#c89547] text-white shadow-lg shadow-[#d8a355]/25">
+          <div className="w-full max-w-lg rounded-[32px] border border-[#d9d2f6] bg-gradient-to-br from-[#ffffff] via-[#f7f3ff] to-[#eee6ff] p-8 text-center shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] text-white shadow-lg shadow-[#7c3aed]/25">
               <PhoneCall className="h-9 w-9" />
             </div>
-            <h2 className="mt-5 text-3xl font-black text-[#2b2114]">اتصال بصديق</h2>
-            <p className="mt-3 text-lg font-bold text-[#6f5330]">اتصل عليه قبل أن ينتهي الوقت</p>
-            <div className="mt-6 rounded-[28px] border border-[#e7d5b1] bg-white/70 p-6 shadow-sm">
-              <p className="text-sm font-bold text-[#9e6f26]">الوقت المتبقي</p>
-              <p className="mt-2 text-5xl font-black text-[#b5862c]">{phoneTimeLeft}</p>
-              <p className="mt-2 text-sm font-semibold text-[#7c6950]">ثانية</p>
+            <h2 className="mt-5 text-3xl font-black text-[#1f1147]">اتصال بصديق</h2>
+            <p className="mt-3 text-lg font-bold text-[#5b5570]">اتصل عليه قبل أن ينتهي الوقت</p>
+            <div className="mt-6 rounded-[28px] border border-[#ded5fb] bg-white/85 p-6 shadow-sm">
+              <p className="text-sm font-bold text-[#7c3aed]">الوقت المتبقي</p>
+              <p className="mt-2 text-5xl font-black text-[#6d28d9]">{phoneTimeLeft}</p>
+              <p className="mt-2 text-sm font-semibold text-[#7b7492]">ثانية</p>
             </div>
           </div>
         </div>
@@ -705,19 +753,19 @@ export default function MillionaireGamePage() {
 
       {audienceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm" onClick={() => setAudienceModalOpen(false)}>
-          <div className="w-full max-w-md rounded-[30px] border border-[#ead7b2] bg-gradient-to-br from-[#fffaf1] via-[#f7e8cf] to-[#eed8b2] p-5 shadow-[0_20px_55px_rgba(53,38,14,0.28)]" onClick={(event) => event.stopPropagation()}>
+          <div className="w-full max-w-md rounded-[30px] border border-[#d9d2f6] bg-gradient-to-br from-[#ffffff] via-[#f7f3ff] to-[#eee6ff] p-5 shadow-[0_20px_55px_rgba(91,33,182,0.18)]" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 text-center">
-              <h2 className="text-2xl font-black text-[#2b2114]">تصويت الجمهور</h2>
+              <h2 className="text-2xl font-black text-[#1f1147]">تصويت الجمهور</h2>
             </div>
 
-            <div className="rounded-[24px] border border-[#e5cf9e] bg-[linear-gradient(180deg,#0a0a0a_0%,#111722_100%)] px-4 py-6 shadow-[inset_0_0_0_1px_rgba(255,221,160,0.14)]">
+            <div className="rounded-[24px] border border-[#d9d2f6] bg-[linear-gradient(180deg,#1a1333_0%,#241744_100%)] px-4 py-6 shadow-[inset_0_0_0_1px_rgba(196,181,253,0.14)]">
               <div className="flex h-[260px] items-end justify-between gap-3">
                 {audienceVotes.map((vote) => (
                   <div key={vote.optionNumber} className="flex w-full flex-col items-center justify-end gap-2">
                     <p className="text-lg font-black text-white">{vote.percentage}%</p>
-                    <div className="flex h-[170px] w-full max-w-[54px] items-end rounded-t-[8px] border border-[#ffd778]/45 bg-white/5 p-[3px] shadow-[0_0_12px_rgba(255,190,59,0.18)]">
+                    <div className="flex h-[170px] w-full max-w-[54px] items-end rounded-t-[8px] border border-[#c4b5fd]/35 bg-white/5 p-[3px] shadow-[0_0_12px_rgba(124,58,237,0.18)]">
                       <div
-                        className="w-full rounded-t-[6px] bg-gradient-to-t from-[#c88000] via-[#f0ad11] to-[#ffd45d] shadow-[inset_0_0_0_1px_rgba(255,243,198,0.35)]"
+                        className="w-full rounded-t-[6px] bg-gradient-to-t from-[#5b21b6] via-[#7c3aed] to-[#c4b5fd] shadow-[inset_0_0_0_1px_rgba(243,240,255,0.35)]"
                         style={{ height: `${Math.max(vote.percentage, 6)}%` }}
                       />
                     </div>

@@ -190,26 +190,26 @@ export default function QuestionsDatabase() {
   if (authLoading || !authVerified) return <SiteLoader fullScreen />;
 
   return (
-    <div dir="rtl" className="min-h-screen flex flex-col bg-slate-50">
+    <div dir="rtl" className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#ffffff_0%,#faf7ff_45%,#ffffff_100%)]">
       <Header />
 
       <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto space-y-8">
           
           {/*Header Section */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="bg-white/95 rounded-3xl p-6 sm:p-8 shadow-[0_24px_80px_rgba(124,58,237,0.08)] border border-[#7c3aed]/15 flex flex-col sm:flex-row items-center justify-between gap-6 backdrop-blur-sm">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#d8a355]/10 rounded-2xl flex items-center justify-center text-[#d8a355]">
+              <div className="w-14 h-14 bg-[#7c3aed]/10 rounded-2xl flex items-center justify-center text-[#7c3aed]">
                 <Database size={32} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-slate-800">قاعدة الأسئلة</h1>
+                <h1 className="text-3xl font-bold text-[#1f1147]">قاعدة الأسئلة</h1>
               </div>
             </div>
             <Button
               onClick={openAddCategoryDialog}
               variant="outline"
-              className="w-full sm:w-auto border-[#D4AF37]/40 text-neutral-600 rounded-xl h-10 px-6 hover:bg-[#D4AF37]/8 hover:text-neutral-700"
+              className="w-full sm:w-auto border-[#7c3aed]/25 text-[#6d28d9] rounded-xl h-10 px-6 hover:bg-[#f5f3ff] hover:text-[#5b21b6]"
             >
               <Plus className="ml-2" size={20} />
               إضافة فئة جديدة
@@ -222,28 +222,28 @@ export default function QuestionsDatabase() {
               categories.map((category) => (
                 <div
                   key={category.id}
-                  className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all"
+                  className="bg-white rounded-3xl shadow-[0_20px_60px_rgba(124,58,237,0.08)] border border-[#7c3aed]/12 overflow-hidden transition-all"
                 >
                   {/* Category Header */}
                   <div 
                     className={`p-5 flex items-center justify-between cursor-pointer transition-colors ${
-                      expandedCategories.has(category.id) ? 'bg-slate-50/80 border-b' : 'hover:bg-slate-50/50'
+                      expandedCategories.has(category.id) ? 'bg-[#faf7ff] border-b border-[#7c3aed]/10' : 'hover:bg-[#faf7ff]/80'
                     }`}
                     onClick={() => toggleCategory(category.id)}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`p-2 rounded-lg transition-colors ${
-                        expandedCategories.has(category.id) ? 'bg-[#d8a355] text-white' : 'bg-slate-100 text-slate-400'
+                        expandedCategories.has(category.id) ? 'bg-[#7c3aed] text-white' : 'bg-[#f3efff] text-[#8b79c9]'
                       }`}>
                         {expandedCategories.has(category.id) ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                          <Layers size={18} className="text-[#d8a355]" />
+                        <h3 className="text-xl font-bold text-[#1f1147] flex items-center gap-2">
+                          <Layers size={18} className="text-[#7c3aed]" />
                           {category.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
-                           <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                           <span className="text-xs font-medium text-[#7c3aed] bg-[#f5f3ff] px-2 py-0.5 rounded-md">
                              {category.questions?.length || 0} أسئلة
                            </span>
                         </div>
@@ -255,7 +255,7 @@ export default function QuestionsDatabase() {
                         onClick={() => openAddQuestionDialog(category.id)}
                         variant="outline"
                         size="sm"
-                        className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 rounded-lg px-4"
+                        className="border-[#7c3aed]/20 text-[#6d28d9] hover:bg-[#f5f3ff] hover:border-[#7c3aed]/35 rounded-lg px-4"
                       >
                         <Plus size={16} className="ml-1" />
                         سؤال
@@ -264,7 +264,7 @@ export default function QuestionsDatabase() {
                         onClick={() => openEditCategoryDialog(category)}
                         variant="ghost"
                         size="icon"
-                        className="text-slate-400 hover:text-[#d8a355] hover:bg-[#d8a355]/5"
+                        className="text-slate-400 hover:text-[#7c3aed] hover:bg-[#f5f3ff]"
                       >
                         <Edit size={18} />
                       </Button>
@@ -287,25 +287,25 @@ export default function QuestionsDatabase() {
                           {category.questions.map((question) => (
                             <div
                               key={question.id}
-                              className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:border-[#d8a355]/30 hover:shadow-md transition-all"
+                              className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-[#ede7ff] bg-[#fcfbff] hover:bg-white hover:border-[#7c3aed]/25 hover:shadow-md transition-all"
                             >
                               <div className="space-y-3 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1 bg-[#d8a355] text-white">
+                                  <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1 bg-[#7c3aed] text-white">
                                     <Trophy size={10} />
                                     {question.points} نقطة
                                   </div>
                                 </div>
                                 <div className="space-y-1">
                                   <div className="flex items-start gap-2">
-                                    <HelpCircle className="text-slate-400 mt-1 shrink-0" size={18} />
-                                    <p className="text-lg font-bold text-slate-800 leading-tight">
+                                    <HelpCircle className="text-[#8b79c9] mt-1 shrink-0" size={18} />
+                                    <p className="text-lg font-bold text-[#1f1147] leading-tight">
                                       {question.question}
                                     </p>
                                   </div>
                                   <div className="flex items-start gap-2 mr-6">
-                                    <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={16} />
-                                    <p className="text-slate-600 font-medium">
+                                    <CheckCircle2 className="text-[#7c3aed] mt-0.5 shrink-0" size={16} />
+                                    <p className="text-[#5b5570] font-medium">
                                       {question.answer}
                                     </p>
                                   </div>
@@ -317,7 +317,7 @@ export default function QuestionsDatabase() {
                                   onClick={() => openEditQuestionDialog(question)}
                                   variant="ghost"
                                   size="icon"
-                                  className="h-10 w-10 text-slate-400 hover:text-[#d8a355] rounded-full"
+                                  className="h-10 w-10 text-slate-400 hover:text-[#7c3aed] rounded-full hover:bg-[#f5f3ff]"
                                 >
                                   <Edit size={18} />
                                 </Button>
@@ -334,7 +334,7 @@ export default function QuestionsDatabase() {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                        <div className="flex flex-col items-center justify-center py-10 text-[#8b79c9]">
                           <AlertCircle size={40} className="mb-2 opacity-20" />
                           <p>لا توجد أسئلة في هذه الفئة بعد</p>
                         </div>
@@ -344,18 +344,18 @@ export default function QuestionsDatabase() {
                 </div>
               ))
             ) : (
-              <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 py-24 text-center">
-                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Layers className="text-slate-200" size={48} />
+              <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d2f6] py-24 text-center shadow-[0_20px_60px_rgba(124,58,237,0.06)]">
+                <div className="w-24 h-24 bg-[#f5f3ff] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Layers className="text-[#c4b5fd]" size={48} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800">القاعدة فارغة</h3>
-                <p className="text-slate-400 mt-2 max-w-xs mx-auto">
+                <h3 className="text-2xl font-bold text-[#1f1147]">القاعدة فارغة</h3>
+                <p className="text-[#8b79c9] mt-2 max-w-xs mx-auto">
                   ابدأ بإضافة فئات جديدة لتمكين اللاعبين من اختيار أسئلتهم المفضلة
                 </p>
                 <Button 
                   onClick={openAddCategoryDialog}
                   variant="link" 
-                  className="text-[#d8a355] mt-4 font-bold text-lg"
+                  className="text-[#7c3aed] mt-4 font-bold text-lg"
                 >
                   أضف أول فئة الآن
                 </Button>
@@ -368,12 +368,12 @@ export default function QuestionsDatabase() {
       {/* Dialogs */}
       {/* Category Dialog */}
       <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-        <DialogContent showCloseButton={false} className="max-w-md bg-white rounded-2xl p-0 overflow-hidden" dir="rtl">
+        <DialogContent showCloseButton={false} className="max-w-md overflow-hidden rounded-2xl border border-[#7c3aed]/15 bg-white p-0 shadow-[0_24px_80px_rgba(124,58,237,0.12)]" dir="rtl">
           <DialogTitle className="sr-only">{editingCategory ? "تعديل الفئة" : "إضافة فئة جديدة"}</DialogTitle>
-          <DialogHeader className="px-6 py-5 border-b border-[#D4AF37]/30 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
+          <DialogHeader className="px-6 py-5 border-b border-[#7c3aed]/15 bg-gradient-to-r from-[#f5f3ff] to-transparent">
             <DialogTitle className="flex w-full justify-start pr-2 text-right text-lg font-bold text-[#1a2332]">
               <span className="inline-flex items-center gap-2">
-                <Layers className="w-5 h-5 text-[#C9A961]" />
+                <Layers className="w-5 h-5 text-[#7c3aed]" />
                 <span>{editingCategory ? "تعديل الفئة" : "إضافة فئة جديدة"}</span>
               </span>
             </DialogTitle>
@@ -385,21 +385,21 @@ export default function QuestionsDatabase() {
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
                 placeholder="مثال: التاريخ، العلوم، الرياضة..."
-                className="h-10 rounded-xl border-[#D4AF37]/40 focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37] text-sm"
+                className="h-10 rounded-xl border-[#7c3aed]/25 focus-visible:ring-[#7c3aed]/20 focus-visible:border-[#7c3aed] text-sm"
               />
             </div>
           </div>
-          <div className="px-6 py-4 border-t border-[#D4AF37]/25 flex gap-3">
+          <div className="px-6 py-4 border-t border-[#7c3aed]/15 flex gap-3">
               <Button 
                 onClick={handleCategorySubmit} 
-                className="flex-1 h-10 rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#C9A961] font-medium transition-colors hover:bg-[#D4AF37]/20"
+                className="flex-1 h-10 rounded-lg bg-[#7c3aed] text-white font-medium transition-colors hover:bg-[#6d28d9]"
               >
                 {editingCategory ? "حفظ التعديلات" : "حفظ"}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setShowCategoryDialog(false)}
-                className="border-[#D4AF37]/40 text-neutral-600 rounded-xl h-10"
+                className="border-[#7c3aed]/25 text-[#6d28d9] rounded-xl h-10 hover:bg-[#f5f3ff]"
               >
                 إلغاء
               </Button>
@@ -409,9 +409,9 @@ export default function QuestionsDatabase() {
 
       {/* Question Dialog */}
       <Dialog open={showQuestionDialog} onOpenChange={setShowQuestionDialog}>
-        <DialogContent showCloseButton={false} className="max-w-2xl bg-white rounded-2xl p-0 overflow-hidden [&>button]:hidden" dir="rtl">
+        <DialogContent showCloseButton={false} className="max-w-2xl overflow-hidden rounded-2xl border border-[#7c3aed]/15 bg-white p-0 shadow-[0_24px_80px_rgba(124,58,237,0.12)] [&>button]:hidden" dir="rtl">
           <DialogTitle className="sr-only">{editingQuestion ? "تعديل السؤال" : "إضافة سؤال جديد"}</DialogTitle>
-          <DialogHeader className="px-6 py-5 border-b border-[#D4AF37]/30 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
+          <DialogHeader className="px-6 py-5 border-b border-[#7c3aed]/15 bg-gradient-to-r from-[#f5f3ff] to-transparent">
             <DialogTitle className="flex w-full justify-start pr-2 text-right text-lg font-bold text-[#1a2332]">
               <span>{editingQuestion ? "تعديل السؤال" : "إضافة سؤال جديد"}</span>
             </DialogTitle>
@@ -423,7 +423,7 @@ export default function QuestionsDatabase() {
                 <Input
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
-                  className="h-10 rounded-xl border-[#D4AF37]/40 focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37] text-sm"
+                  className="h-10 rounded-xl border-[#7c3aed]/25 focus-visible:ring-[#7c3aed]/20 focus-visible:border-[#7c3aed] text-sm"
                 />
               </div>
 
@@ -432,7 +432,7 @@ export default function QuestionsDatabase() {
                 <Input
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
-                  className="h-10 rounded-xl border-[#D4AF37]/40 focus-visible:ring-[#D4AF37]/30 focus-visible:border-[#D4AF37] text-sm"
+                  className="h-10 rounded-xl border-[#7c3aed]/25 focus-visible:ring-[#7c3aed]/20 focus-visible:border-[#7c3aed] text-sm"
                 />
               </div>
 
@@ -445,8 +445,8 @@ export default function QuestionsDatabase() {
                       onClick={() => setPointsValue(val)}
                       className={`h-10 rounded-xl border text-sm font-semibold transition-all ${
                         pointsValue === val 
-                          ? 'border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#C9A961]' 
-                          : 'border-[#D4AF37]/20 bg-white text-slate-500 hover:bg-[#D4AF37]/5'
+                          ? 'border-[#7c3aed]/30 bg-[#f5f3ff] text-[#7c3aed]' 
+                          : 'border-[#7c3aed]/15 bg-white text-slate-500 hover:bg-[#f5f3ff]'
                       }`}
                     >
                       {val}
@@ -456,17 +456,17 @@ export default function QuestionsDatabase() {
               </div>
             </div>
           </div>
-          <div className="px-6 py-4 border-t border-[#D4AF37]/25 flex gap-3">
+          <div className="px-6 py-4 border-t border-[#7c3aed]/15 flex gap-3">
               <Button 
                 onClick={handleQuestionSubmit} 
-                className="flex-1 h-10 rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#C9A961] font-medium transition-colors hover:bg-[#D4AF37]/20"
+                className="flex-1 h-10 rounded-lg bg-[#7c3aed] text-white font-medium transition-colors hover:bg-[#6d28d9]"
               >
                 {editingQuestion ? "حفظ التعديلات" : "حفظ"}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setShowQuestionDialog(false)}
-                className="border-[#D4AF37]/40 text-neutral-600 rounded-xl h-10"
+                className="border-[#7c3aed]/25 text-[#6d28d9] rounded-xl h-10 hover:bg-[#f5f3ff]"
               >
                 إلغاء
               </Button>
@@ -476,12 +476,12 @@ export default function QuestionsDatabase() {
 
       {/* Delete Confirmation */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent showCloseButton={false} className="max-w-md bg-white rounded-2xl p-0 overflow-hidden" dir="rtl">
+        <DialogContent showCloseButton={false} className="max-w-md overflow-hidden rounded-2xl border border-[#7c3aed]/15 bg-white p-0 shadow-[0_24px_80px_rgba(124,58,237,0.12)]" dir="rtl">
           <DialogTitle className="sr-only">تأكيد الحذف</DialogTitle>
-          <DialogHeader className="px-6 py-5 border-b border-[#D4AF37]/30 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
+          <DialogHeader className="px-6 py-5 border-b border-[#7c3aed]/15 bg-gradient-to-r from-[#f5f3ff] to-transparent">
             <DialogTitle className="flex w-full justify-start pr-2 text-right text-lg font-bold text-[#1a2332]">
               <span className="inline-flex items-center gap-2">
-                <Trash2 className="w-5 h-5 text-[#C9A961]" />
+                <Trash2 className="w-5 h-5 text-[#7c3aed]" />
                 <span>تأكيد الحذف</span>
               </span>
             </DialogTitle>
@@ -493,7 +493,7 @@ export default function QuestionsDatabase() {
                 : "سيتم حذف هذا السؤال بشكل دائم من قاعدة البيانات."}
             </div>
           </div>
-          <div className="px-6 py-4 border-t border-[#D4AF37]/25 flex gap-3">
+          <div className="px-6 py-4 border-t border-[#7c3aed]/15 flex gap-3">
             <Button 
               onClick={handleDelete} 
               className="flex-1 h-10 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium"
@@ -503,7 +503,7 @@ export default function QuestionsDatabase() {
             <Button 
               variant="outline" 
               onClick={() => setShowDeleteDialog(false)}
-              className="border-[#D4AF37]/40 text-neutral-600 rounded-xl h-10"
+              className="border-[#7c3aed]/25 text-[#6d28d9] rounded-xl h-10 hover:bg-[#f5f3ff]"
             >
               إلغاء
             </Button>

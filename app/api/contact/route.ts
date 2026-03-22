@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getSessionFromCookieHeader } from "@/lib/auth/session"
 
 // Rate limiting: Store last submission time per IP
 const rateLimitMap = new Map<string, number>()
 const RATE_LIMIT_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
+const ADMIN_ROLES = ["admin", "مدير", "سكرتير", "مشرف تعليمي", "مشرف تربوي", "مشرف برامج"]
+
+async function requireAdmin(request: Request) {
+  const session = await getSessionFromCookieHeader(request.headers.get("cookie"))
+
+  if (!session || !ADMIN_ROLES.includes(session.role)) {
+    return NextResponse.json({ error: "غير مصرح لك" }, { status: 403 })
+  }
+
+  return null
+}
 
 export async function POST(request: Request) {
   try {
@@ -67,8 +79,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const unauthorized = await requireAdmin(request)
+    if (unauthorized) {
+      return unauthorized
+    }
+
     const supabase = await createClient()
 
     const { data: messages, error } = await supabase
@@ -90,6 +107,11 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    const unauthorized = await requireAdmin(request)
+    if (unauthorized) {
+      return unauthorized
+    }
+
     const body = await request.json()
     const { id, status } = body
 
@@ -115,6 +137,11 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const unauthorized = await requireAdmin(request)
+    if (unauthorized) {
+      return unauthorized
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 

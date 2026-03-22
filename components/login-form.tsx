@@ -3,14 +3,18 @@
 import type React from "react"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LogIn, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
+import { persistClientAuth } from "@/lib/auth/client"
+import { normalizePhoneNumber } from "@/lib/auth/phone"
 
 export function LoginForm() {
-  const [accountNumber, setAccountNumber] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -28,7 +32,8 @@ export function LoginForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          account_number: accountNumber,
+          phoneNumber,
+          password,
         }),
       })
 
@@ -47,27 +52,15 @@ export function LoginForm() {
       const data = await response.json()
 
       if (data.success && data.user) {
-        const currentUser = {
-          account_number: data.user.accountNumber,
-          role: data.user.role,
+        persistClientAuth({
+          id: data.user.id,
           name: data.user.name,
+          role: data.user.role,
+          accountNumber: String(data.user.accountNumber),
           halaqah: data.user.halaqah || "",
-          id: data.user.id // أضف uuid للطالب
-        }
-        localStorage.setItem("currentUser", JSON.stringify(currentUser))
-
-        localStorage.setItem("account_number", data.user.accountNumber.toString())
-        localStorage.setItem("accountNumber", data.user.accountNumber.toString())
-        localStorage.setItem("userRole", data.user.role)
-        localStorage.setItem("userName", data.user.name)
-        localStorage.setItem("studentName", data.user.name)
-        localStorage.setItem("userHalaqah", data.user.halaqah || "")
-        localStorage.setItem("isLoggedIn", "true")
-
-        // إذا كان الطالب، احفظ studentId (uuid) في localStorage
-        if (data.user.role === "student" && data.user.id) {
-          localStorage.setItem("studentId", data.user.id);
-        }
+          email: data.user.email || "",
+          phoneNumber: data.user.phoneNumber || "",
+        })
 
         setIsSuccess(true)
         setTimeout(() => {
@@ -85,52 +78,68 @@ export function LoginForm() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border-2 border-[#d8a355]/30 relative">
+    <div className="relative rounded-[2rem] border border-[#7c3aed]/10 bg-white p-6 shadow-[0_24px_80px_rgba(124,58,237,0.08)] md:p-8">
       {isSuccess && (
-        <div className="absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center z-10 animate-in fade-in duration-300">
-          <CheckCircle2 className="w-20 h-20 md:w-32 md:h-32 text-[#d8a355] animate-in zoom-in duration-500" />
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[2rem] bg-white animate-in fade-in duration-300">
+          <CheckCircle2 className="h-20 w-20 text-[#7c3aed] animate-in zoom-in duration-500 md:h-28 md:w-28" />
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2 text-center">
+          <h2 className="text-3xl font-black text-[#1f1147]">تسجيل الدخول</h2>
+        </div>
+
         <div className="space-y-2">
-          <Label htmlFor="accountNumber" className="text-[#023232] font-semibold text-base md:text-lg">
-            رقم الحساب
+          <Label htmlFor="phoneNumber" className="text-sm font-bold text-[#1f1147]">
+            رقم الجوال
           </Label>
           <Input
-            id="accountNumber"
-            type="text"
-            placeholder="أدخل رقم الحساب"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            className="h-12 md:h-14 text-base md:text-lg text-center border-2 border-gray-200 focus:border-[#d8a355] transition-colors"
+            id="phoneNumber"
+            type="tel"
+            placeholder="+966500000000"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(normalizePhoneNumber(e.target.value))}
+            className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-left text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
             required
             dir="ltr"
+            autoComplete="tel"
+            inputMode="tel"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-bold text-[#1f1147]">
+            كلمة المرور
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="اكتب كلمة المرور"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-left text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
+            required
+            dir="ltr"
+            autoComplete="current-password"
           />
         </div>
 
         {error && (
-          <div className="bg-red-50 border-2 border-red-200 text-red-700 px-3 md:px-4 py-2 md:py-3 rounded-lg text-center text-sm md:text-base">{error}</div>
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-700">{error}</div>
         )}
 
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 md:h-14 bg-gradient-to-r from-[#d8a355] to-[#c99347] hover:from-[#d8a355]/90 hover:to-[#c99347]/90 text-[#023232] font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          className="h-14 w-full rounded-2xl bg-[#7c3aed] text-base font-black text-white hover:bg-[#6d28d9]"
         >
-          {isLoading ? (
-            "جاري تسجيل الدخول..."
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <LogIn className="w-4 h-4 md:w-5 md:h-5" />
-              تسجيل الدخول
-            </span>
-          )}
+          {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
         </Button>
       </form>
 
-      <div className="mt-4 md:mt-6 text-center text-xs md:text-sm text-[#023232]/60">
-        <p>استخدم رقم الحساب الخاص بك للدخول</p>
+      <div className="mt-5 text-center text-sm text-[#5b5570]">
+        ليس لديك حساب؟ <Link href="/register" className="font-bold text-[#7c3aed]">إنشاء حساب جديد</Link>
       </div>
     </div>
   )

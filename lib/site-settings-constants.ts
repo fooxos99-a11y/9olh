@@ -1,2 +1,0 @@
-export const TEACHER_ATTENDANCE_DELAY_SETTING_ID = "teacher_attendance_delay"
-export const DEFAULT_TEACHER_ATTENDANCE_DELAY_MINUTES = 50

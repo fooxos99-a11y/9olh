@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import { Geist, Cairo } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ConfirmDialogProvider } from "@/hooks/use-confirm-dialog"
-import { GlobalAdminModals } from '@/components/global-admin-modals'
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
@@ -11,8 +10,8 @@ const geist = Geist({ subsets: ["latin"] })
 const cairo = Cairo({ subsets: ["arabic"], variable: "--font-cairo" })
 
 export const metadata: Metadata = {
-  title: "قَبَسْ",
-  description: "منصة قَبَسْ التعليمية - كل ما تحتاجه في مكان واحد",
+  title: "صولة وجولة",
+  description: "منصة ألعاب عربية تنافسية تجمع الألعاب والتحديات في مكان واحد",
   generator: "v0.app",
 }
 
@@ -28,7 +27,6 @@ export default function RootLayout({
       </head>
       <body className={`${cairo.className} antialiased`} suppressHydrationWarning>
         <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
-        <GlobalAdminModals />
         <Toaster />
         <Analytics />
       </body>

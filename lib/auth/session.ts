@@ -1,6 +1,6 @@
 import crypto from "node:crypto"
 
-export type AppRole = "student" | "teacher" | "deputy_teacher" | "admin" | "supervisor"
+export type AppRole = "student" | "teacher" | "deputy_teacher" | "admin" | "supervisor" | "subscriber" | "registered"
 
 export type SessionUser = {
   id: string
@@ -8,6 +8,8 @@ export type SessionUser = {
   role: AppRole
   accountNumber: string
   halaqah?: string
+  email?: string
+  phoneNumber?: string
   issuedAt: number
   expiresAt: number
 }

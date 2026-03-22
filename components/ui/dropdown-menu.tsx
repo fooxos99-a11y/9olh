@@ -20,7 +20,7 @@ function DropdownMenuTrigger({ ...props }: React.ComponentProps<typeof DropdownM
 
 function DropdownMenuContent({
   className,
-  sideOffset = 4,
+  sideOffset = 10,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (
@@ -29,17 +29,11 @@ function DropdownMenuContent({
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md relative",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-[1.4rem] border border-[#ece7fb] bg-white p-2 text-[#1f1147] shadow-[0_24px_80px_rgba(31,17,71,0.12)] backdrop-blur-sm",
           className,
         )}
         {...props}
-      >
-        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#d8a355]/40 rounded-tl-sm"></div>
-        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#d8a355]/40 rounded-tr-sm"></div>
-        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#d8a355]/40 rounded-bl-sm"></div>
-        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#d8a355]/40 rounded-br-sm"></div>
-        {props.children}
-      </DropdownMenuPrimitive.Content>
+      />
     </DropdownMenuPrimitive.Portal>
   )
 }
@@ -63,7 +57,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex cursor-default items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold outline-hidden select-none transition data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[variant=destructive]:text-red-600 data-[variant=destructive]:focus:bg-red-50 data-[variant=destructive]:focus:text-red-600 focus:bg-[#f6f1ff] focus:text-[#4c1d95]",
         className,
       )}
       {...props}
@@ -136,7 +130,7 @@ function DropdownMenuLabel({
     <DropdownMenuPrimitive.Label
       data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn("px-2 py-1.5 text-sm font-medium data-[inset]:pl-8", className)}
+      className={cn("px-4 py-2 text-sm font-medium data-[inset]:pl-8", className)}
       {...props}
     />
   )
@@ -146,7 +140,7 @@ function DropdownMenuSeparator({ className, ...props }: React.ComponentProps<typ
   return (
     <DropdownMenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
-      className={cn("bg-border -mx-1 my-1 h-px", className)}
+      className={cn("-mx-1 my-2 h-px bg-[#f1ebff]", className)}
       {...props}
     />
   )

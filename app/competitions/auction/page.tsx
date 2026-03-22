@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog"
 import { SiteLoader } from "@/components/ui/site-loader"
 import { Plus, Minus, HelpCircle, Trophy, RotateCcw } from "lucide-react"
+import { GameEntryPanel, GameEntryShell, GameField } from "@/components/games/game-entry-shell"
+import { GameFinishOverlay } from "@/components/games/game-finish-overlay"
 
 type Team = {
   name: string
@@ -38,6 +40,7 @@ export default function AuctionGame() {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [showAnswer, setShowAnswer] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [usedCategoryIds, setUsedCategoryIds] = useState<string[]>([])
   const [showCategoryDialog, setShowCategoryDialog] = useState(false)
   const [showBiddingDialog, setShowBiddingDialog] = useState(false)
   const [bidAmount, setBidAmount] = useState(100)
@@ -47,6 +50,8 @@ export default function AuctionGame() {
   const [timerActive, setTimerActive] = useState(false)
 
   const [cycleNotification, setCycleNotification] = useState(false)
+  const [questionsExhausted, setQuestionsExhausted] = useState(false)
+  const [resettingQuestions, setResettingQuestions] = useState(false)
 
   // تعديل النقاط يدويًا
   const [editingTeam, setEditingTeam] = useState<number | null>(null)
@@ -144,7 +149,33 @@ export default function AuctionGame() {
         score: 1000
       }))
       setTeams(initialTeams)
+      setUsedCategoryIds([])
       setStep("game")
+    }
+  }
+
+  const getNextQuestionByCategoryCycle = (
+    questions: Question[],
+    consumedCategoryIds: string[],
+    excludedCategoryIds: string[] = [],
+  ) => {
+    const eligibleQuestions = questions.filter((question) => !excludedCategoryIds.includes(question.category.id))
+
+    if (eligibleQuestions.length === 0) {
+      return { question: null, nextUsedCategoryIds: consumedCategoryIds }
+    }
+
+    const availableCategoryIds = Array.from(new Set(eligibleQuestions.map((question) => question.category.id)))
+    const prioritizedCategoryIds = availableCategoryIds.filter((categoryId) => !consumedCategoryIds.includes(categoryId))
+    const categoryPool = prioritizedCategoryIds.length > 0 ? prioritizedCategoryIds : availableCategoryIds
+    const shouldResetCycle = prioritizedCategoryIds.length === 0
+    const randomCategoryId = categoryPool[Math.floor(Math.random() * categoryPool.length)]
+    const categoryQuestions = eligibleQuestions.filter((question) => question.category.id === randomCategoryId)
+    const randomQuestion = categoryQuestions[Math.floor(Math.random() * categoryQuestions.length)]
+
+    return {
+      question: randomQuestion,
+      nextUsedCategoryIds: shouldResetCycle ? [randomCategoryId] : [...consumedCategoryIds, randomCategoryId],
     }
   }
 
@@ -172,23 +203,39 @@ export default function AuctionGame() {
     }
   }
 
+  const handleResetQuestions = async () => {
+    setResettingQuestions(true)
+
+    try {
+      await resetUsedQuestions()
+      await fetchUsedQuestions()
+      setUsedCategoryIds([])
+      setQuestionsExhausted(false)
+      setCycleNotification(false)
+    } finally {
+      setResettingQuestions(false)
+    }
+  }
+
   const selectQuestion = async () => {
     const usedIds = Array.isArray(usedQuestionIds) ? usedQuestionIds : []
-    let availableQuestions = allQuestions.filter(q => !usedIds.includes(q.id))
+    const availableQuestions = allQuestions.filter(q => !usedIds.includes(q.id))
 
-    // إذا انتهت الأسئلة، أعد تعيينها من جديد
     if (availableQuestions.length === 0) {
-      await resetUsedQuestions()
-      availableQuestions = [...allQuestions]
+      setQuestionsExhausted(true)
       setCycleNotification(true)
       setTimeout(() => setCycleNotification(false), 3000)
     }
 
     if (availableQuestions.length === 0) return
 
-    // اختيار سؤال عشوائي من المتاحة
-    const randomQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)]
+    setQuestionsExhausted(false)
+
+    const { question: randomQuestion, nextUsedCategoryIds } = getNextQuestionByCategoryCycle(availableQuestions, usedCategoryIds)
+    if (!randomQuestion) return
+
     setCurrentQuestion(randomQuestion)
+    setUsedCategoryIds(nextUsedCategoryIds)
     const newUsedIds = [...(allQuestions.length === availableQuestions.length ? [] : usedIds), randomQuestion.id]
     setUsedQuestionIds(newUsedIds)
     await markQuestionAsUsed(randomQuestion.id)
@@ -257,6 +304,8 @@ export default function AuctionGame() {
     setNumTeams(2)
     setTeamNames(["", ""])
     setTeams([])
+    setUsedCategoryIds([])
+    setQuestionsExhausted(false)
     setCurrentQuestion(null)
     setShowAnswer(false)
   }
@@ -264,131 +313,103 @@ export default function AuctionGame() {
   const winnerTeam = teams.reduce((prev, current) => 
     (prev.score > current.score) ? prev : current
   , teams[0])
+  const finalRankings = [...teams].sort((a, b) => b.score - a.score)
 
   // صفحة الإعداد
   if (step === "setup") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf8f5] via-[#f5ead8] to-[#faf8f5] p-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 border-2 border-[#d8a355]/30">
-            <h1 className="text-2xl sm:text-4xl font-bold text-center mb-4 sm:mb-8 bg-gradient-to-r from-[#d8a355] to-[#c89547] bg-clip-text text-transparent">
-              لعبة المزاد
-            </h1>
+      <GameEntryShell
+        title="لعبة المزاد"
+        badge="إعداد الجولة"
+        containerClassName="max-w-3xl"
+      >
+        <GameEntryPanel>
+          <div className="space-y-5">
+            <GameField label="عدد الفرق" hint="يمكنك الاختيار من فريقين إلى عشرة فرق">
+              <Input
+                type="number"
+                min="2"
+                max="10"
+                value={numTeams}
+                onChange={(e) => handleNumTeamsChange(parseInt(e.target.value) || 2)}
+                className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-center text-lg font-black text-[#1f1147] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
+              />
+            </GameField>
 
-            <div className="space-y-6">
-              <div>
-                <Label className="text-lg font-semibold text-[#1a2332] mb-2">
-                  عدد الفرق
-                </Label>
+            <div className="space-y-4">
+              <div className="text-sm font-bold text-[#1f1147] md:text-base">أسماء الفرق</div>
+              {teamNames.map((name, index) => (
                 <Input
-                  type="number"
-                  min="2"
-                  max="10"
-                  value={numTeams}
-                  onChange={(e) => handleNumTeamsChange(parseInt(e.target.value) || 2)}
-                  className="text-center text-xl font-bold"
+                  key={index}
+                  placeholder={`اكتب اسم الفريق ${index + 1}`}
+                  value={name}
+                  onChange={(e) => handleTeamNameChange(index, e.target.value)}
+                  className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
                 />
-              </div>
-
-              <div className="space-y-4">
-                <Label className="text-lg font-semibold text-[#1a2332]">
-                  أسماء الفرق
-                </Label>
-                {teamNames.map((name, index) => (
-                  <Input
-                    key={index}
-                    placeholder={`الفريق ${index + 1}`}
-                    value={name}
-                    onChange={(e) => handleTeamNameChange(index, e.target.value)}
-                    className="text-lg"
-                  />
-                ))}
-              </div>
-
-              <Button
-                onClick={startGame}
-                disabled={!teamNames.every(name => name.trim()) || loading}
-                className="w-full bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#d8a355] text-white text-xl py-6"
-              >
-                {loading ? <SiteLoader size="sm" color="#ffffff" /> : "ابدأ اللعبة"}
-              </Button>
+              ))}
             </div>
+
+            <Button
+              onClick={startGame}
+              disabled={!teamNames.every((name) => name.trim()) || loading}
+              className="h-14 w-full rounded-2xl bg-[#7c3aed] text-lg font-black text-white hover:bg-[#6d28d9]"
+            >
+              {loading ? <SiteLoader size="sm" color="#ffffff" /> : "ابدأ اللعبة"}
+            </Button>
           </div>
-        </div>
-      </div>
+        </GameEntryPanel>
+      </GameEntryShell>
     )
   }
 
   // صفحة الفائز
   if (step === "winner") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf8f5] via-[#f5ead8] to-[#faf8f5] p-6 flex items-center justify-center">
-        <div className="max-w-2xl w-full">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-12 border-2 border-[#d8a355]/30 text-center">
-            <Trophy className="w-32 h-32 mx-auto mb-6 text-[#d8a355]" />
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-[#d8a355] to-[#c89547] bg-clip-text text-transparent">
-              مبروك!
-            </h1>
-            <p className="text-3xl font-bold text-[#1a2332] mb-4">
-              الفريق الفائز: {winnerTeam?.name}
-            </p>
-            <p className="text-6xl font-black text-[#d8a355] mb-8">
-              {winnerTeam?.score.toLocaleString()} نقطة
-            </p>
-
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-[#1a2332] mb-4">النتائج النهائية:</h3>
-              {teams
-                .sort((a, b) => b.score - a.score)
-                .map((team, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center bg-gradient-to-r from-[#faf8f5] to-[#f5ead8] rounded-xl p-4"
-                  >
-                    <span className="text-xl font-bold text-[#1a2332]">
-                      {index + 1}. {team.name}
-                    </span>
-                    <span className="text-2xl font-black text-[#d8a355]">
-                      {team.score.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-            </div>
-
-            <Button
-              onClick={resetGame}
-              className="mt-8 w-full bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#d8a355] text-white text-xl py-6"
-            >
-              <RotateCcw className="mr-2" />
-              لعب مرة أخرى
-            </Button>
+      <GameFinishOverlay
+        title={`مبروك الفوز للفريق: ${winnerTeam?.name ?? "-"}`}
+        subtitle={`${winnerTeam?.score?.toLocaleString() ?? "0"} نقطة`}
+        details={
+          <div className="space-y-4 text-right">
+            {finalRankings.map((team, index) => (
+              <div key={`${team.name}-${index}`} className="flex items-center justify-between rounded-[1.35rem] border border-[#e9e2fb] bg-[#fcfbff] p-4">
+                <span className="text-lg font-black text-[#1f1147]">{index + 1}. {team.name}</span>
+                <span className="text-xl font-black text-[#7c3aed]">{team.score.toLocaleString()}</span>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+        }
+        actions={[
+          {
+            label: "لعب مرة أخرى",
+            onClick: resetGame,
+            icon: <RotateCcw className="mr-2 h-5 w-5" />,
+          },
+        ]}
+      />
     )
   }
 
   // صفحة اللعبة
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf8f5] via-[#f5ead8] to-[#faf8f5] p-4 sm:p-8">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#faf7ff_45%,#ffffff_100%)] p-4 sm:p-8">
 
       {/* إشعار إعادة الأسئلة */}
       {cycleNotification && (
         <div className="fixed top-4 inset-x-0 mx-auto max-w-sm z-50 px-4">
-          <div className="bg-[#1a2332] text-white text-sm font-semibold text-center rounded-xl px-5 py-3 shadow-xl">
-            🔄 تم إعادة جميع الأسئلة من جديد
+          <div className="bg-[#1f1147] text-white text-sm font-semibold text-center rounded-xl px-5 py-3 shadow-xl">
+            انتهت الأسئلة المتاحة لهذا المستخدم في لعبة المزاد.
           </div>
         </div>
       )}
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-10">
-          <h1 className="text-3xl sm:text-5xl font-black mb-2 bg-gradient-to-r from-[#d8a355] to-[#c89547] bg-clip-text text-transparent">
+        <div className="mb-6 rounded-[2rem] border border-[#d9d2f6] bg-white/75 px-6 py-6 text-center shadow-[0_20px_60px_rgba(124,58,237,0.08)] backdrop-blur-sm sm:mb-10 sm:px-8 sm:py-8">
+          <h1 className="mb-3 pb-[0.18em] text-3xl font-black leading-[1.2] bg-gradient-to-r from-[#1f1147] to-[#7c3aed] bg-clip-text text-transparent sm:text-5xl">
             🏆 لعبة المزاد
           </h1>
-          <p className="text-[#1a2332]/60 text-base sm:text-lg font-medium">
-            زايد على السؤال واحصل على النقاط!
+          <p className="text-base font-bold leading-[1.7] text-[#4c4570] sm:text-lg">
+            زايد على السؤال اللي واثق بإجابته واحسم الجولة لصالح فريقك.
           </p>
         </div>
 
@@ -403,8 +424,8 @@ export default function AuctionGame() {
               key={index}
               className="relative group"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#d8a355] to-[#c89547] rounded-2xl blur-sm group-hover:blur-md transition-all"></div>
-              <div className="relative bg-white rounded-2xl shadow-xl p-6 sm:p-8 border-2 border-[#d8a355]/20 hover:border-[#d8a355] transition-all">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] rounded-2xl blur-sm group-hover:blur-md transition-all"></div>
+              <div className="relative bg-white rounded-2xl shadow-xl p-6 sm:p-8 border-2 border-[#7c3aed]/15 hover:border-[#7c3aed]/40 transition-all">
                 <div className="text-center">
                   <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-[#1a2332]">
                     {team.name}
@@ -418,7 +439,7 @@ export default function AuctionGame() {
                       className="focus:outline-none"
                       title="تعديل النقاط"
                     >
-                      <span className="text-4xl sm:text-6xl font-black bg-gradient-to-r from-[#d8a355] to-[#c89547] bg-clip-text text-transparent mb-1">
+                      <span className="text-4xl sm:text-6xl font-black bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] bg-clip-text text-transparent mb-1">
                         {team.score.toLocaleString()}
                       </span>
                     </button>
@@ -429,6 +450,21 @@ export default function AuctionGame() {
             </div>
           ))}
         </div>
+        {questionsExhausted ? (
+          <div className="mb-6 rounded-2xl border border-[#7c3aed]/20 bg-white/85 px-5 py-4 text-center shadow-sm sm:mb-8">
+            <div className="text-sm font-bold text-[#6d28d9] sm:text-base">
+              انتهت الأسئلة المتاحة لهذا المستخدم في لعبة المزاد. يمكنك إعادة الأسئلة ثم متابعة اللعب.
+            </div>
+            <Button
+              onClick={() => {
+                void handleResetQuestions()
+              }}
+              className="mt-4 rounded-xl bg-[#7c3aed] px-6 py-2 text-sm font-black text-white hover:bg-[#6d28d9]"
+            >
+              {resettingQuestions ? "جارٍ إعادة الأسئلة..." : "إعادة الأسئلة"}
+            </Button>
+          </div>
+        ) : null}
       {/* مودال تعديل النقاط */}
       <Dialog open={editingTeam !== null} onOpenChange={handleCancelEdit}>
         <DialogContent className="max-w-md">
@@ -466,7 +502,7 @@ export default function AuctionGame() {
             <div className="flex gap-3">
               <Button
                 onClick={handleSaveScore}
-                className="flex-1 text-lg py-6 bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#b88437] text-white shadow-lg"
+                className="flex-1 text-lg py-6 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white shadow-lg"
               >
                 حفظ
               </Button>
@@ -483,13 +519,13 @@ export default function AuctionGame() {
       </Dialog>
 
         {/* أزرار التحكم */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border-2 border-[#d8a355]/20">
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border-2 border-[#7c3aed]/15">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={selectQuestion}
               size="lg"
               disabled={loading || allQuestions.length === 0}
-              className="flex-1 bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#d8a355] text-white text-lg sm:text-xl px-8 py-6 sm:py-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+              className="flex-1 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white text-lg sm:text-xl px-8 py-6 sm:py-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
             >
               <HelpCircle className="mr-2 w-6 h-6" />
               سؤال جديد
@@ -519,38 +555,39 @@ export default function AuctionGame() {
                   size="icon"
                   title="تغيير الفئة"
                   onClick={async () => {
-                    // جلب الفئات الأخرى التي بها أسئلة غير مستخدمة
-                    const otherCategories = Array.from(new Set(
-                      allQuestions
-                        .filter(q => q.category.id !== currentQuestion.category.id && !usedQuestionIds.includes(q.id))
-                        .map(q => q.category.id)
-                    ));
-                    if (otherCategories.length === 0) {
+                    const availableQuestions = allQuestions.filter(
+                      (question) => question.category.id !== currentQuestion.category.id && !usedQuestionIds.includes(question.id),
+                    )
+
+                    if (availableQuestions.length === 0) {
                       alert("لا يوجد فئة أخرى بها أسئلة متاحة!");
-                      return;
+                      return
                     }
-                    // اختيار فئة عشوائية
-                    const randomCatId = otherCategories[Math.floor(Math.random() * otherCategories.length)];
-                    const available = allQuestions.filter(
-                      q => q.category.id === randomCatId && !usedQuestionIds.includes(q.id)
-                    );
-                    if (available.length === 0) {
+
+                    const { question: randomQuestion, nextUsedCategoryIds } = getNextQuestionByCategoryCycle(
+                      availableQuestions,
+                      usedCategoryIds,
+                      [currentQuestion.category.id],
+                    )
+
+                    if (!randomQuestion) {
                       alert("لا يوجد سؤال متاح في الفئة الجديدة!");
-                      return;
+                      return
                     }
-                    const random = available[Math.floor(Math.random() * available.length)];
-                    setCurrentQuestion(random);
+
+                    setCurrentQuestion(randomQuestion)
+                    setUsedCategoryIds(nextUsedCategoryIds)
                   }}
                   className="ml-2"
                 >
-                  <RotateCcw className="w-6 h-6 text-[#c89547]" />
+                  <RotateCcw className="w-6 h-6 text-[#7c3aed]" />
                 </Button>
               )}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 sm:space-y-6 py-4 sm:py-6">
-            <div className="bg-gradient-to-r from-[#d8a355] to-[#c89547] rounded-lg p-6 sm:p-12 mb-4 sm:mb-6">
+            <div className="bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] rounded-lg p-6 sm:p-12 mb-4 sm:mb-6">
               <p className="text-2xl sm:text-4xl text-center font-black text-white">
                 {currentQuestion?.category.name}
               </p>
@@ -565,7 +602,7 @@ export default function AuctionGame() {
                 <Button
                   key={index}
                   onClick={() => startBidding(index)}
-                  className="bg-gradient-to-r from-[#faf8f5] to-[#f5ead8] hover:from-[#d8a355] hover:to-[#c89547] text-[#1a2332] hover:text-white border-2 border-[#d8a355] font-bold text-lg py-8"
+                  className="bg-gradient-to-r from-[#fcfbff] to-[#f5f3ff] hover:from-[#7c3aed] hover:to-[#6d28d9] text-[#1a2332] hover:text-white border-2 border-[#cdb8fb] font-bold text-lg py-8"
                 >
                   {team.name}
                 </Button>
@@ -593,8 +630,8 @@ export default function AuctionGame() {
               </div>
             )}
 
-            <div className="bg-gradient-to-r from-[#faf8f5] to-[#f5ead8] rounded-lg p-6 sm:p-12 border-2 border-[#d8a355]/30">
-              <p className="text-3xl sm:text-6xl font-black text-center text-[#d8a355]">
+            <div className="bg-gradient-to-r from-[#fcfbff] to-[#f5f3ff] rounded-lg p-6 sm:p-12 border-2 border-[#7c3aed]/20">
+              <p className="text-3xl sm:text-6xl font-black text-center text-[#7c3aed]">
                 {bidAmount.toLocaleString()}
               </p>
             </div>
@@ -603,7 +640,7 @@ export default function AuctionGame() {
               <Button
                 onClick={() => adjustBid(-100)}
                 size="lg"
-                className="bg-gradient-to-br from-[#c89547] to-[#b88437] hover:from-[#b88437] hover:to-[#a87327] text-white text-xl sm:text-2xl h-16 w-16 sm:h-20 sm:w-20 shadow-lg"
+                className="bg-gradient-to-br from-[#6d28d9] to-[#5b21b6] hover:from-[#5b21b6] hover:to-[#4c1d95] text-white text-xl sm:text-2xl h-16 w-16 sm:h-20 sm:w-20 shadow-lg"
               >
                 <Minus className="w-6 h-6 sm:w-8 sm:h-8" />
               </Button>
@@ -611,7 +648,7 @@ export default function AuctionGame() {
               <Button
                 onClick={() => adjustBid(100)}
                 size="lg"
-                className="bg-gradient-to-br from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#b88437] text-white text-2xl h-20 w-20 shadow-lg"
+                className="bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white text-2xl h-20 w-20 shadow-lg"
               >
                 <Plus className="w-8 h-8" />
               </Button>
@@ -619,7 +656,7 @@ export default function AuctionGame() {
 
             <Button
               onClick={confirmBid}
-              className="w-full bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#d8a355] text-white text-xl py-6"
+              className="w-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white text-xl py-6"
             >
               تأكيد المزاد
             </Button>
@@ -654,23 +691,23 @@ export default function AuctionGame() {
                     }}
                     className="ml-2"
                   >
-                    <RotateCcw className="w-6 h-6 text-[#d8a355]" />
+                    <RotateCcw className="w-6 h-6 text-[#7c3aed]" />
                   </Button>
                 )}
               </div>
-              <div className="text-2xl font-bold" style={{ color: '#00312e' }}>
+              <div className="text-2xl font-bold text-[#7c3aed]">
                 ⏱️ {timeLeft}s
               </div>
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-6">
-            <div className="bg-gradient-to-r from-[#d8a355] to-[#c89547] rounded-lg p-4 mb-4">
+            <div className="bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] rounded-lg p-4 mb-4">
               <p className="text-xl text-center font-bold text-white">
                 {currentQuestion?.category.name}
               </p>
             </div>
-            <div className="bg-gradient-to-r from-[#faf8f5] to-[#f5ead8] rounded-lg p-8 border-2 border-[#d8a355]/30">
+            <div className="bg-gradient-to-r from-[#fcfbff] to-[#f5f3ff] rounded-lg p-8 border-2 border-[#7c3aed]/20">
               <p className="text-2xl text-center font-semibold text-[#1a2332]">
                 {currentQuestion?.question}
               </p>
@@ -689,7 +726,7 @@ export default function AuctionGame() {
                 <Button
                   onClick={() => setShowAnswer(true)}
                   size="lg"
-                  className="bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#d8a355] text-white text-xl px-12 py-6"
+                  className="bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white text-xl px-12 py-6"
                 >
                   إظهار الإجابة
                 </Button>
@@ -698,7 +735,7 @@ export default function AuctionGame() {
                   <Button
                     onClick={handleCorrectAnswer}
                     size="lg"
-                    className="bg-gradient-to-r from-[#d8a355] to-[#c89547] hover:from-[#c89547] hover:to-[#b88437] text-white text-xl px-12 py-6 shadow-lg"
+                    className="bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white text-xl px-12 py-6 shadow-lg"
                   >
                     <Plus className="mr-2" />
                     إجابة صحيحة (+{bidAmount.toLocaleString()})
@@ -706,7 +743,7 @@ export default function AuctionGame() {
                   <Button
                     onClick={handleWrongAnswer}
                     size="lg"
-                    className="bg-gradient-to-r from-[#c89547] to-[#b88437] hover:from-[#b88437] hover:to-[#a87327] text-white text-xl px-12 py-6 shadow-lg"
+                    className="bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] hover:from-[#7c3aed] hover:to-[#6d28d9] text-white text-xl px-12 py-6 shadow-lg"
                   >
                     <Minus className="mr-2" />
                     إجابة خاطئة (-{bidAmount.toLocaleString()})
