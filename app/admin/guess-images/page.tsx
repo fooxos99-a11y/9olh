@@ -275,7 +275,7 @@ export default function GuessImagesManagement() {
               }}
               disabled={!selectedStageId}
               size="lg"
-              className="bg-[#d8a355] hover:bg-[#c89547] text-white shadow-md transition-all rounded-full px-6"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-md transition-all rounded-full px-6"
             >
               <ImagePlus className="ml-2 w-5 h-5" /> إضافة صورة جديدة
             </Button>
@@ -284,7 +284,7 @@ export default function GuessImagesManagement() {
           {/* قسم المراحل */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <FolderPlus className="text-[#d8a355] w-5 h-5" />
+              <FolderPlus className="text-[#7c3aed] w-5 h-5" />
               <h2 className="text-lg font-semibold text-slate-800">المستويات</h2>
             </div>
             
@@ -298,8 +298,8 @@ export default function GuessImagesManagement() {
                       key={stage.id} 
                       className={`group relative flex items-center transition-all rounded-full border ${
                         selectedStageId === stage.id 
-                          ? 'bg-[#d8a355] border-[#d8a355] text-white shadow-md' 
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-[#d8a355] hover:text-[#d8a355]'
+                          ? 'bg-[#7c3aed] border-[#7c3aed] text-white shadow-md' 
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-[#7c3aed] hover:text-[#7c3aed]'
                       }`}
                     >
                       <button
@@ -323,7 +323,7 @@ export default function GuessImagesManagement() {
                   {!showAddStage ? (
                     <Button 
                       variant="outline" 
-                      className="rounded-full border-dashed border-2 hover:border-[#d8a355] hover:text-[#d8a355] hover:bg-[#d8a355]/5"
+                      className="rounded-full border-dashed border-2 hover:border-[#7c3aed] hover:text-[#7c3aed] hover:bg-[#7c3aed]/5"
                       onClick={() => setShowAddStage(true)}
                     >
                       <Plus className="w-4 h-4 ml-1" /> إضافة مستوى
@@ -337,7 +337,7 @@ export default function GuessImagesManagement() {
                         className="border-0 bg-transparent focus-visible:ring-0 w-40 rounded-full"
                         autoFocus
                       />
-                      <Button type="submit" size="sm" className="rounded-full bg-[#d8a355] hover:bg-[#c89547] text-white" disabled={stageLoading || !newStage.trim()}>
+                      <Button type="submit" size="sm" className="rounded-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white" disabled={stageLoading || !newStage.trim()}>
                         حفظ
                       </Button>
                       <Button type="button" size="icon" variant="ghost" className="rounded-full text-slate-500 hover:text-red-500" onClick={() => setShowAddStage(false)}>
@@ -370,7 +370,7 @@ export default function GuessImagesManagement() {
                   {images.map((image) => (
                     <div
                       key={image.id}
-                      className="group flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-[#d8a355]/50"
+                      className="group flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-[#7c3aed]/50"
                     >
                       {/* حاوية الصورة مع أزرار التحكم الطافية */}
                       <div className="relative aspect-square bg-slate-100 overflow-hidden">
@@ -389,7 +389,7 @@ export default function GuessImagesManagement() {
                             <button
                               title="تعديل"
                               onClick={() => handleEdit(image)}
-                              className="bg-white/90 text-slate-700 hover:text-[#d8a355] hover:bg-white rounded-full p-2 shadow-sm transition-colors"
+                              className="bg-white/90 text-slate-700 hover:text-[#7c3aed] hover:bg-white rounded-full p-2 shadow-sm transition-colors"
                             >
                               <Pencil size={16} />
                             </button>
@@ -429,7 +429,7 @@ export default function GuessImagesManagement() {
         <DialogContent showCloseButton={false} className="sm:max-w-xl p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
           <DialogHeader className="p-6 bg-slate-50 border-b border-slate-100">
             <DialogTitle className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              {editingImage ? <Pencil className="w-6 h-6 text-[#d8a355]" /> : <ImagePlus className="w-6 h-6 text-[#d8a355]" />}
+              {editingImage ? <Pencil className="w-6 h-6 text-[#7c3aed]" /> : <ImagePlus className="w-6 h-6 text-[#7c3aed]" />}
               {editingImage ? "تعديل تفاصيل الصورة" : "رفع صورة جديدة"}
             </DialogTitle>
           </DialogHeader>
@@ -438,8 +438,8 @@ export default function GuessImagesManagement() {
             {/* منطقة السحب والإفلات */}
             <div className="space-y-2">
               <div className="flex justify-start">
-                <div className="inline-flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#d8a355] shadow-sm">
+                <div className="inline-flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50/70 px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#7c3aed] shadow-sm">
                     <CircleAlert className="h-3.5 w-3.5" />
                   </span>
                   <div className="leading-6">
@@ -454,8 +454,8 @@ export default function GuessImagesManagement() {
                 onClick={() => document.getElementById('file-input')?.click()}
                 className={`relative overflow-hidden border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group ${
                   isDragging
-                    ? 'border-[#d8a355] bg-amber-50/50'
-                    : 'border-slate-300 bg-slate-50 hover:border-[#d8a355] hover:bg-slate-50/80'
+                    ? 'border-[#7c3aed] bg-violet-50/50'
+                    : 'border-slate-300 bg-slate-50 hover:border-[#7c3aed] hover:bg-slate-50/80'
                 }`}
               >
                 {previewUrl ? (
@@ -465,14 +465,14 @@ export default function GuessImagesManagement() {
                       alt="معاينة"
                       className="max-h-56 mx-auto rounded-lg shadow-sm object-contain"
                     />
-                    <div className="inline-flex items-center gap-2 text-sm text-slate-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm group-hover:bg-[#d8a355] group-hover:text-white transition-colors">
+                    <div className="inline-flex items-center gap-2 text-sm text-slate-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm group-hover:bg-[#7c3aed] group-hover:text-white transition-colors">
                       <Upload className="w-4 h-4" /> اضغط لتغيير الصورة
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4 py-6">
                     <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                      <Upload className="w-8 h-8 text-[#d8a355]" />
+                      <Upload className="w-8 h-8 text-[#7c3aed]" />
                     </div>
                     <div>
                       <p className="text-lg font-bold text-slate-700">
@@ -513,7 +513,7 @@ export default function GuessImagesManagement() {
               <Button
                 type="submit"
                 disabled={uploading || (!selectedFile && !editingImage) || !selectedStageId}
-                className="flex-1 h-12 text-base font-semibold bg-[#d8a355] hover:bg-[#c89547] text-white rounded-xl disabled:opacity-50"
+                className="flex-1 h-12 text-base font-semibold bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-xl disabled:opacity-50"
               >
                 {uploading ? "جاري الحفظ..." : editingImage ? "حفظ التعديلات" : "إضافة الصورة للمستوى"}
               </Button>

@@ -33,16 +33,6 @@ const adminGames = [
     description: "إدارة التصنيفات والأسئلة والنقاط لكل فئة.",
     href: "/admin/questions",
   },
-  {
-    title: "التحديات اليومية",
-    description: "التحكم في تحديات اليوم وإدارتها من صفحة واحدة.",
-    href: "/admin/daily-challenges",
-  },
-  {
-    title: "مراحل خمن الصورة",
-    description: "صفحة مستقلة لمراجعة مراحل خمن الصورة بسرعة.",
-    href: "/admin/guess-stages",
-  },
 ]
 
 export default function AdminEntryPage() {
