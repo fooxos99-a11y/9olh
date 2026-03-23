@@ -702,9 +702,6 @@ export default function CategoriesPage() {
                     } ${!selectedCategoryIds.includes(category.id) && selectedCategoryIds.length >= MAX_SELECTED_CATEGORIES ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                   >
                     <h3 className="text-lg font-black">{category.name}</h3>
-                    <p className={`mt-2 text-sm ${selectedCategoryIds.includes(category.id) ? "text-white/80" : "text-[#6f6788]"}`}>
-                      {category.questions?.length || 0} أسئلة
-                    </p>
                     {selectedCategoryIds.includes(category.id) ? (
                       <div className="absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#6d28d9]">
                         <Check className="h-4 w-4" />
