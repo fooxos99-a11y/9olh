@@ -116,7 +116,6 @@ export default function GuessImagesGame() {
           <GameEntryShell
             title="خمن الصورة"
             badge="أسماء الفرق"
-            subtitle="بعد اختيار المرحلة، جهّز الفريقين وابدأ الجولة بشكل مرتب ومتناسق مع باقي الألعاب."
             containerClassName="max-w-3xl"
           >
             <GameEntryPanel>
@@ -163,51 +162,42 @@ export default function GuessImagesGame() {
         {/* السبورة واللعبة */}
         {step === 'game' && (
           <>
-            <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="relative overflow-hidden rounded-[2.25rem] border border-[#7c3aed]/12 bg-white/80 p-4 shadow-[0_28px_90px_rgba(124,58,237,0.10)] backdrop-blur-sm sm:p-6">
+            <div className="w-full max-w-[90rem] px-3 sm:px-5 lg:px-6">
+              <div className="relative overflow-hidden rounded-[2.25rem] border border-[#7c3aed]/12 bg-white/80 p-3 shadow-[0_28px_90px_rgba(124,58,237,0.10)] backdrop-blur-sm sm:p-4">
                 <div className="absolute left-0 top-0 h-40 w-40 rounded-full bg-[#ddd6fe]/55 blur-3xl" />
                 <div className="absolute bottom-0 right-0 h-44 w-44 rounded-full bg-[#c4b5fd]/35 blur-3xl" />
 
-                <div className="relative mb-5 grid gap-4 md:grid-cols-2 lg:mb-6">
-                  <div className="rounded-[1.6rem] border border-[#7c3aed]/15 bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ff_100%)] p-3 shadow-[0_18px_40px_rgba(124,58,237,0.08)]">
-                    <div className="flex items-center gap-3">
-                      <div className="flex min-h-[88px] min-w-[190px] flex-1 items-center justify-center rounded-[1.2rem] bg-[linear-gradient(135deg,#7c3aed_0%,#6d28d9_100%)] px-5 py-3 text-center text-2xl font-black text-white">
-                        {team2Name}
-                      </div>
-                      <div className="flex min-h-[88px] min-w-[160px] items-center justify-between rounded-[1.2rem] border border-[#d9d2f6] bg-white px-3 py-2 text-[#1f1147] shadow-sm">
-                        <Button size="icon" variant="ghost" className="h-11 w-11 rounded-xl text-[#7c3aed] hover:bg-[#f5f3ff]" onClick={() => setTeam2Score(s => s + 1)} title="إضافة">
-                          <span className="text-[1.7rem] leading-none">+</span>
-                        </Button>
-                        <span className="min-w-[48px] text-center text-3xl font-black">{team2Score}</span>
-                        <Button size="icon" variant="ghost" className="h-11 w-11 rounded-xl text-[#7c3aed] hover:bg-[#f5f3ff] disabled:text-[#d3c9f5]" onClick={() => setTeam2Score(s => s - 1)} disabled={team2Score <= 0} title="إنقاص">
-                          <span className="text-[1.7rem] leading-none">-</span>
-                        </Button>
-                      </div>
-                    </div>
+                <div className="relative mb-4 flex flex-nowrap items-stretch gap-2 overflow-x-auto pb-1 lg:mb-5">
+                  <div className="flex min-h-[56px] min-w-[180px] flex-1 items-center justify-center rounded-[1rem] bg-[linear-gradient(135deg,#7c3aed_0%,#6d28d9_100%)] px-4 py-2 text-center text-lg font-black text-white">
+                    {team2Name}
                   </div>
-
-                  <div className="rounded-[1.6rem] border border-[#7c3aed]/15 bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ff_100%)] p-3 shadow-[0_18px_40px_rgba(124,58,237,0.08)]">
-                    <div className="flex items-center gap-3">
-                      <div className="flex min-h-[88px] min-w-[160px] items-center justify-between rounded-[1.2rem] border border-[#d9d2f6] bg-white px-3 py-2 text-[#1f1147] shadow-sm">
-                        <Button size="icon" variant="ghost" className="h-11 w-11 rounded-xl text-[#7c3aed] hover:bg-[#f5f3ff]" onClick={() => setTeam1Score(s => s + 1)} title="إضافة">
-                          <span className="text-[1.7rem] leading-none">+</span>
-                        </Button>
-                        <span className="min-w-[48px] text-center text-3xl font-black">{team1Score}</span>
-                        <Button size="icon" variant="ghost" className="h-11 w-11 rounded-xl text-[#7c3aed] hover:bg-[#f5f3ff] disabled:text-[#d3c9f5]" onClick={() => setTeam1Score(s => s - 1)} disabled={team1Score <= 0} title="إنقاص">
-                          <span className="text-[1.7rem] leading-none">-</span>
-                        </Button>
-                      </div>
-                      <div className="flex min-h-[88px] min-w-[190px] flex-1 items-center justify-center rounded-[1.2rem] bg-[linear-gradient(135deg,#7c3aed_0%,#6d28d9_100%)] px-5 py-3 text-center text-2xl font-black text-white">
-                        {team1Name}
-                      </div>
-                    </div>
+                  <div className="flex min-h-[56px] min-w-[132px] items-center justify-between rounded-[1rem] border border-[#d9d2f6] bg-white px-2 py-1 text-[#1f1147] shadow-sm">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-[#7c3aed] hover:bg-[#f5f3ff]" onClick={() => setTeam2Score(s => s + 1)} title="إضافة">
+                      <span className="text-[1.15rem] leading-none">+</span>
+                    </Button>
+                    <span className="min-w-[36px] text-center text-[1.65rem] font-black">{team2Score}</span>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-[#7c3aed] hover:bg-[#f5f3ff] disabled:text-[#d3c9f5]" onClick={() => setTeam2Score(s => s - 1)} disabled={team2Score <= 0} title="إنقاص">
+                      <span className="text-[1.15rem] leading-none">-</span>
+                    </Button>
+                  </div>
+                  <div className="flex min-h-[56px] min-w-[132px] items-center justify-between rounded-[1rem] border border-[#d9d2f6] bg-white px-2 py-1 text-[#1f1147] shadow-sm">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-[#7c3aed] hover:bg-[#f5f3ff]" onClick={() => setTeam1Score(s => s + 1)} title="إضافة">
+                      <span className="text-[1.15rem] leading-none">+</span>
+                    </Button>
+                    <span className="min-w-[36px] text-center text-[1.65rem] font-black">{team1Score}</span>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-[#7c3aed] hover:bg-[#f5f3ff] disabled:text-[#d3c9f5]" onClick={() => setTeam1Score(s => s - 1)} disabled={team1Score <= 0} title="إنقاص">
+                      <span className="text-[1.15rem] leading-none">-</span>
+                    </Button>
+                  </div>
+                  <div className="flex min-h-[56px] min-w-[180px] flex-1 items-center justify-center rounded-[1rem] bg-[linear-gradient(135deg,#7c3aed_0%,#6d28d9_100%)] px-4 py-2 text-center text-lg font-black text-white">
+                    {team1Name}
                   </div>
                 </div>
 
-                <div className="relative overflow-hidden rounded-[2rem] border border-[#7c3aed]/15 bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ff_100%)] p-3 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.04)] sm:p-4">
-                  <div className="flex min-h-[440px] items-center justify-center rounded-[1.6rem] border border-dashed border-[#cdbef7] bg-[radial-gradient(circle_at_top,#faf7ff_0%,#f5f3ff_45%,#ffffff_100%)] p-4 shadow-[0_24px_60px_rgba(124,58,237,0.08)] sm:min-h-[560px]">
+                <div className="relative overflow-hidden rounded-[2rem] border border-[#7c3aed]/15 bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ff_100%)] p-2.5 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.04)] sm:p-3">
+                  <div className="flex min-h-[520px] items-center justify-center rounded-[1.6rem] border border-dashed border-[#cdbef7] bg-[radial-gradient(circle_at_top,#faf7ff_0%,#f5f3ff_45%,#ffffff_100%)] p-3 shadow-[0_24px_60px_rgba(124,58,237,0.08)] sm:min-h-[680px] lg:min-h-[760px]">
                     {current?.image_url ? (
-                      <img src={current.image_url} alt="صورة التخمين" className="max-h-[540px] w-full rounded-[1.3rem] object-contain" style={{maxWidth: '100%'}} />
+                      <img src={current.image_url} alt="صورة التخمين" className="max-h-[500px] w-full rounded-[1.3rem] object-contain sm:max-h-[620px] lg:max-h-[720px]" style={{maxWidth: '100%'}} />
                     ) : (
                       <div className="flex flex-col items-center justify-center text-center text-[#6f6788]">
                         <div className="mb-3 rounded-full bg-[#f1ebff] px-4 py-2 text-sm font-black text-[#7c3aed]">خمن الصورة</div>
@@ -231,9 +221,6 @@ export default function GuessImagesGame() {
                     <div className="p-6 sm:p-8">
                     <DialogHeader>
                       <DialogTitle className="text-center text-3xl font-black text-[#1f1147]">الإجابة</DialogTitle>
-                      <div className="mb-2 w-full text-center text-lg font-semibold text-[#5b5570]" style={{direction: 'rtl'}}>
-                        اكتشف معنى الصورة قبل الفريق الآخر
-                      </div>
                     </DialogHeader>
                     <div className="my-5 rounded-[1.5rem] bg-[linear-gradient(135deg,#7c3aed_0%,#6d28d9_100%)] px-6 py-5 text-center text-2xl font-black text-white shadow-[0_18px_40px_rgba(124,58,237,0.24)]">{current?.answer}</div>
                     <div className="mt-2 flex flex-col gap-3">

@@ -534,7 +534,7 @@ export default function CategoriesPage() {
 
   const renderEndGameButton = () => (
     <LifelineButton
-      icon={<img src="/انهاء.svg" alt="" className="h-8 w-8 object-contain" aria-hidden="true" />}
+      icon={<img src="/انهاء.svg" alt="" className="h-6 w-6 object-contain" aria-hidden="true" />}
       tooltip="إنهاء اللعبة"
       ariaLabel="إنهاء اللعبة"
       tooltipWidthClass="w-[120px]"

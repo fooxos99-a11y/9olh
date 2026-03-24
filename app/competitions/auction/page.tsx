@@ -15,6 +15,9 @@ import { Plus, Minus, HelpCircle, Trophy, RotateCcw } from "lucide-react"
 import { GameEntryPanel, GameEntryShell, GameField } from "@/components/games/game-entry-shell"
 import { GameFinishOverlay } from "@/components/games/game-finish-overlay"
 
+const MIN_TEAMS = 2
+const MAX_TEAMS = 10
+
 type Team = {
   name: string
   score: number
@@ -32,7 +35,6 @@ type Question = {
 
 export default function AuctionGame() {
   const [step, setStep] = useState<"setup" | "game" | "winner">("setup")
-  const [numTeams, setNumTeams] = useState(2)
   const [teamNames, setTeamNames] = useState<string[]>(["", ""])
   const [teams, setTeams] = useState<Team[]>([])
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
@@ -130,28 +132,49 @@ export default function AuctionGame() {
 
   // تم تعطيل إعادة تعيين الأسئلة المستخدمة نهائيًا حتى لا تتكرر الأسئلة لنفس الحساب
 
-  const handleNumTeamsChange = (value: number) => {
-    const newNum = Math.max(2, Math.min(10, value))
-    setNumTeams(newNum)
-    setTeamNames(Array(newNum).fill(""))
-  }
-
   const handleTeamNameChange = (index: number, value: string) => {
     const newNames = [...teamNames]
     newNames[index] = value
     setTeamNames(newNames)
   }
 
+  const addTeamField = () => {
+    if (teamNames.length >= MAX_TEAMS) {
+      return
+    }
+
+    setTeamNames((currentNames) => [...currentNames, ""])
+  }
+
+  const removeTeamField = (index: number) => {
+    if (teamNames.length <= MIN_TEAMS) {
+      return
+    }
+
+    setTeamNames((currentNames) => currentNames.filter((_, currentIndex) => currentIndex !== index))
+  }
+
   const startGame = () => {
-    if (teamNames.every(name => name.trim())) {
-      const initialTeams = teamNames.map(name => ({
-        name: name.trim(),
+    const normalizedTeamNames = teamNames.map((name) => name.trim())
+
+    if (normalizedTeamNames.every((name) => name)) {
+      const initialTeams = normalizedTeamNames.map((name) => ({
+        name,
         score: 1000
       }))
       setTeams(initialTeams)
       setUsedCategoryIds([])
       setStep("game")
     }
+  }
+
+  const commitQuestionSelection = async (question: Question, nextUsedCategoryIds: string[]) => {
+    setCurrentQuestion(question)
+    setUsedCategoryIds(nextUsedCategoryIds)
+    setUsedQuestionIds((currentUsedIds) => (
+      currentUsedIds.includes(question.id) ? currentUsedIds : [...currentUsedIds, question.id]
+    ))
+    await markQuestionAsUsed(question.id)
   }
 
   const getNextQuestionByCategoryCycle = (
@@ -165,17 +188,28 @@ export default function AuctionGame() {
       return { question: null, nextUsedCategoryIds: consumedCategoryIds }
     }
 
-    const availableCategoryIds = Array.from(new Set(eligibleQuestions.map((question) => question.category.id)))
-    const prioritizedCategoryIds = availableCategoryIds.filter((categoryId) => !consumedCategoryIds.includes(categoryId))
-    const categoryPool = prioritizedCategoryIds.length > 0 ? prioritizedCategoryIds : availableCategoryIds
+    const allAvailableCategoryIds = Array.from(
+      new Map(questions.map((question) => [question.category.id, question.category.name])).entries(),
+    )
+      .sort((leftCategory, rightCategory) => leftCategory[1].localeCompare(rightCategory[1], "ar"))
+      .map(([categoryId]) => categoryId)
+
+    const eligibleCategoryIds = Array.from(
+      new Map(eligibleQuestions.map((question) => [question.category.id, question.category.name])).entries(),
+    )
+      .sort((leftCategory, rightCategory) => leftCategory[1].localeCompare(rightCategory[1], "ar"))
+      .map(([categoryId]) => categoryId)
+
+    const normalizedConsumedCategoryIds = consumedCategoryIds.filter((categoryId) => allAvailableCategoryIds.includes(categoryId))
+    const prioritizedCategoryIds = eligibleCategoryIds.filter((categoryId) => !normalizedConsumedCategoryIds.includes(categoryId))
     const shouldResetCycle = prioritizedCategoryIds.length === 0
-    const randomCategoryId = categoryPool[Math.floor(Math.random() * categoryPool.length)]
-    const categoryQuestions = eligibleQuestions.filter((question) => question.category.id === randomCategoryId)
+    const nextCategoryId = (shouldResetCycle ? eligibleCategoryIds : prioritizedCategoryIds)[0]
+    const categoryQuestions = eligibleQuestions.filter((question) => question.category.id === nextCategoryId)
     const randomQuestion = categoryQuestions[Math.floor(Math.random() * categoryQuestions.length)]
 
     return {
       question: randomQuestion,
-      nextUsedCategoryIds: shouldResetCycle ? [randomCategoryId] : [...consumedCategoryIds, randomCategoryId],
+      nextUsedCategoryIds: shouldResetCycle ? [nextCategoryId] : [...normalizedConsumedCategoryIds, nextCategoryId],
     }
   }
 
@@ -234,11 +268,7 @@ export default function AuctionGame() {
     const { question: randomQuestion, nextUsedCategoryIds } = getNextQuestionByCategoryCycle(availableQuestions, usedCategoryIds)
     if (!randomQuestion) return
 
-    setCurrentQuestion(randomQuestion)
-    setUsedCategoryIds(nextUsedCategoryIds)
-    const newUsedIds = [...(allQuestions.length === availableQuestions.length ? [] : usedIds), randomQuestion.id]
-    setUsedQuestionIds(newUsedIds)
-    await markQuestionAsUsed(randomQuestion.id)
+    await commitQuestionSelection(randomQuestion, nextUsedCategoryIds)
     setShowCategoryDialog(true)
   }
 
@@ -301,7 +331,6 @@ export default function AuctionGame() {
 
   const resetGame = () => {
     setStep("setup")
-    setNumTeams(2)
     setTeamNames(["", ""])
     setTeams([])
     setUsedCategoryIds([])
@@ -325,27 +354,41 @@ export default function AuctionGame() {
       >
         <GameEntryPanel>
           <div className="space-y-5">
-            <GameField label="عدد الفرق" hint="يمكنك الاختيار من فريقين إلى عشرة فرق">
-              <Input
-                type="number"
-                min="2"
-                max="10"
-                value={numTeams}
-                onChange={(e) => handleNumTeamsChange(parseInt(e.target.value) || 2)}
-                className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-center text-lg font-black text-[#1f1147] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
-              />
-            </GameField>
-
             <div className="space-y-4">
               <div className="text-sm font-bold text-[#1f1147] md:text-base">أسماء الفرق</div>
               {teamNames.map((name, index) => (
-                <Input
-                  key={index}
-                  placeholder={`اكتب اسم الفريق ${index + 1}`}
-                  value={name}
-                  onChange={(e) => handleTeamNameChange(index, e.target.value)}
-                  className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
-                />
+                <div key={index} className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder={`اكتب اسم الفريق ${index + 1}`}
+                      value={name}
+                      onChange={(e) => handleTeamNameChange(index, e.target.value)}
+                      className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => removeTeamField(index)}
+                      disabled={teamNames.length <= MIN_TEAMS}
+                      className="h-14 min-w-14 rounded-2xl border-[#e7defc] px-4 text-[#7c3aed] hover:bg-[#f5f0ff] disabled:text-[#c5b4ef]"
+                      title="حذف الفريق"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  {index === teamNames.length - 1 ? (
+                    <Button
+                      type="button"
+                      onClick={addTeamField}
+                      disabled={teamNames.length >= MAX_TEAMS}
+                      className="h-12 rounded-2xl bg-[#7c3aed] px-5 text-base font-black text-white hover:bg-[#6d28d9] disabled:bg-[#cdb8fb]"
+                    >
+                      <Plus className="mr-2 h-5 w-5" />
+                      إضافة فريق
+                    </Button>
+                  ) : null}
+                </div>
               ))}
             </div>
 
@@ -556,7 +599,7 @@ export default function AuctionGame() {
                   title="تغيير الفئة"
                   onClick={async () => {
                     const availableQuestions = allQuestions.filter(
-                      (question) => question.category.id !== currentQuestion.category.id && !usedQuestionIds.includes(question.id),
+                      (question) => !usedQuestionIds.includes(question.id),
                     )
 
                     if (availableQuestions.length === 0) {
@@ -575,8 +618,7 @@ export default function AuctionGame() {
                       return
                     }
 
-                    setCurrentQuestion(randomQuestion)
-                    setUsedCategoryIds(nextUsedCategoryIds)
+                    await commitQuestionSelection(randomQuestion, nextUsedCategoryIds)
                   }}
                   className="ml-2"
                 >
@@ -687,7 +729,7 @@ export default function AuctionGame() {
                         return;
                       }
                       const random = available[Math.floor(Math.random() * available.length)]
-                      setCurrentQuestion(random)
+                      await commitQuestionSelection(random, usedCategoryIds)
                     }}
                     className="ml-2"
                   >

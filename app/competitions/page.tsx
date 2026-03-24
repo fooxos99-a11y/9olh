@@ -309,9 +309,11 @@ export default function CompetitionsPage() {
   const router = useRouter()
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadAccess() {
       const cachedUser = getCachedClientAuth()
-      if (cachedUser?.role) {
+      if (!cancelled && cachedUser?.role) {
         setHasFullAccess(FULL_LIBRARY_ROLES.includes(cachedUser.role))
         setHasRegisteredAccess(REGISTERED_LIBRARY_ROLES.includes(cachedUser.role))
         setAuthResolved(true)
@@ -339,24 +341,41 @@ export default function CompetitionsPage() {
           setCachedClientAuth(null)
         }
 
-        setHasFullAccess(FULL_LIBRARY_ROLES.includes(role))
-        setHasRegisteredAccess(REGISTERED_LIBRARY_ROLES.includes(role))
+        if (!cancelled) {
+          setHasFullAccess(FULL_LIBRARY_ROLES.includes(role))
+          setHasRegisteredAccess(REGISTERED_LIBRARY_ROLES.includes(role))
+        }
       } catch {
         const role = cachedUser?.role || ""
-        setHasFullAccess(FULL_LIBRARY_ROLES.includes(role))
-        setHasRegisteredAccess(REGISTERED_LIBRARY_ROLES.includes(role))
+        if (!cancelled) {
+          setHasFullAccess(FULL_LIBRARY_ROLES.includes(role))
+          setHasRegisteredAccess(REGISTERED_LIBRARY_ROLES.includes(role))
+        }
       } finally {
-        setAuthResolved(true)
+        if (!cancelled) {
+          setAuthResolved(true)
+        }
       }
     }
 
     void loadAccess()
+
+    const handlePageShow = () => {
+      void loadAccess()
+    }
+
+    window.addEventListener("pageshow", handlePageShow)
 
     games.forEach((game) => {
       if (game.available && (hasFullAccess || hasRegisteredAccess)) {
         router.prefetch(game.path)
       }
     })
+
+    return () => {
+      cancelled = true
+      window.removeEventListener("pageshow", handlePageShow)
+    }
   }, [hasFullAccess, hasRegisteredAccess, router])
 
   const handleGameNavigation = (path: string, gameId: string) => {

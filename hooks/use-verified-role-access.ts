@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { getClientAuthFromStorage } from "@/lib/auth/client"
 
 type AllowedRole = "student" | "subscriber" | "registered" | "admin"
 
 type VerifiedUser = {
   id: string
   name: string
-  role: AllowedRole
+  role: string
   accountNumber: string
   halaqah?: string
 }
@@ -82,7 +83,28 @@ export function useVerifiedRoleAccess(
   useEffect(() => {
     let cancelled = false
 
+    const buildStoredUser = () => {
+      const storedUser = getClientAuthFromStorage()
+      if (!storedUser || !isRoleAllowed(storedUser.role, allowedRoles)) {
+        return null
+      }
+
+      return {
+        id: storedUser.id || "",
+        name: storedUser.name,
+        role: storedUser.role,
+        accountNumber: storedUser.accountNumber,
+        halaqah: storedUser.halaqah || "",
+      } satisfies VerifiedUser
+    }
+
     async function verifyAccess() {
+      const storedUser = buildStoredUser()
+
+      if (storedUser && !cancelled) {
+        setState({ isLoading: false, isAuthorized: true, user: storedUser })
+      }
+
       try {
         const sessionResponse = await fetch("/api/auth", {
           method: "GET",
@@ -106,6 +128,10 @@ export function useVerifiedRoleAccess(
         const storedAccountNumber = localStorage.getItem("account_number") || localStorage.getItem("accountNumber")
 
         if (!isLoggedIn || !storedAccountNumber) {
+          if (storedUser) {
+            return
+          }
+
           clearStoredAuth()
           router.replace(redirectPath)
           return
@@ -160,9 +186,20 @@ export function useVerifiedRoleAccess(
           }
         }
 
+        if (storedUser) {
+          return
+        }
+
         clearStoredAuth()
         router.replace(redirectPath)
       } catch {
+        if (storedUser) {
+          if (!cancelled) {
+            setState({ isLoading: false, isAuthorized: true, user: storedUser })
+          }
+          return
+        }
+
         clearStoredAuth()
         router.replace(redirectPath)
       }
@@ -170,8 +207,15 @@ export function useVerifiedRoleAccess(
 
     void verifyAccess()
 
+    const handlePageShow = () => {
+      void verifyAccess()
+    }
+
+    window.addEventListener("pageshow", handlePageShow)
+
     return () => {
       cancelled = true
+      window.removeEventListener("pageshow", handlePageShow)
     }
   }, [allowedRoles, redirectPath, router])
 

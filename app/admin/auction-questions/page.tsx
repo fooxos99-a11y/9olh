@@ -81,8 +81,11 @@ export default function AuctionQuestionsAdmin() {
   const [newQuestion, setNewQuestion] = useState({ category_id: "", question: "", answer: "" })
   const [newCategoryName, setNewCategoryName] = useState("")
   const [loading, setLoading] = useState(false)
+  const [actionError, setActionError] = useState("")
   const [showDeleteQuestionDialog, setShowDeleteQuestionDialog] = useState(false)
   const [deleteQuestionId, setDeleteQuestionId] = useState<string | null>(null)
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false)
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchQuestions()
@@ -92,7 +95,7 @@ export default function AuctionQuestionsAdmin() {
   const fetchQuestions = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/auction-questions")
+      const response = await fetch("/api/auction-questions", { cache: "no-store" })
       const data = await response.json()
       setQuestions(Array.isArray(data) ? data : [])
     } catch (error) {
@@ -105,7 +108,7 @@ export default function AuctionQuestionsAdmin() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/auction-categories")
+      const response = await fetch("/api/auction-categories", { cache: "no-store" })
       const data = await response.json()
       setCategories(Array.isArray(data) ? data : [])
     } catch (error) {
@@ -117,6 +120,7 @@ export default function AuctionQuestionsAdmin() {
   const handleAddQuestion = async () => {
     if (!newQuestion.category_id || !newQuestion.question.trim() || !newQuestion.answer.trim()) return
     try {
+      setActionError("")
       const response = await fetch("/api/auction-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,15 +130,20 @@ export default function AuctionQuestionsAdmin() {
         setNewQuestion({ category_id: "", question: "", answer: "" })
         setIsAddDialogOpen(false)
         fetchQuestions()
+      } else {
+        const data = await response.json().catch(() => null)
+        setActionError(data?.error || "تعذر إضافة السؤال")
       }
     } catch (error) {
       console.error("Error adding question:", error)
+      setActionError("تعذر إضافة السؤال")
     }
   }
 
   const handleUpdateQuestion = async () => {
     if (!editingQuestion) return
     try {
+      setActionError("")
       const response = await fetch("/api/auction-questions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -144,9 +153,13 @@ export default function AuctionQuestionsAdmin() {
         setEditingQuestion(null)
         setIsEditDialogOpen(false)
         fetchQuestions()
+      } else {
+        const data = await response.json().catch(() => null)
+        setActionError(data?.error || "تعذر تحديث السؤال")
       }
     } catch (error) {
       console.error("Error updating question:", error)
+      setActionError("تعذر تحديث السؤال")
     }
   }
 
@@ -175,6 +188,7 @@ export default function AuctionQuestionsAdmin() {
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return
     try {
+      setActionError("")
       const response = await fetch("/api/auction-categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -184,25 +198,38 @@ export default function AuctionQuestionsAdmin() {
         setNewCategoryName("")
         setIsAddCategoryDialogOpen(false)
         fetchCategories()
+      } else {
+        const data = await response.json().catch(() => null)
+        setActionError(data?.error || "تعذر إضافة الفئة")
       }
     } catch (error) {
       console.error("Error adding category:", error)
+      setActionError("تعذر إضافة الفئة")
     }
   }
 
-  const handleDeleteCategory = async (id: string) => {
-    if (!id || !confirm("هل أنت متأكد من حذف هذه الفئة؟ سيتم حذف جميع الأسئلة المرتبطة بها.")) return
+  const handleDeleteCategory = (id: string) => {
+    if (!id) return
+    setDeleteCategoryId(id)
+    setShowDeleteCategoryDialog(true)
+  }
+
+  const confirmDeleteCategory = async () => {
+    if (!deleteCategoryId) return
     try {
-      const response = await fetch(`/api/auction-categories?id=${id}`, {
+      const response = await fetch(`/api/auction-categories?id=${deleteCategoryId}`, {
         method: "DELETE",
       })
       if (response.ok) {
-        fetchCategories()
-        fetchQuestions()
+        await fetchCategories()
+        await fetchQuestions()
         setSelectedCategoryId("all")
       }
     } catch (error) {
       console.error("Error deleting category:", error)
+    } finally {
+      setShowDeleteCategoryDialog(false)
+      setDeleteCategoryId(null)
     }
   }
 
@@ -215,6 +242,9 @@ export default function AuctionQuestionsAdmin() {
       {/* نافذة تأكيد حذف السؤال */}
       <Dialog open={showDeleteQuestionDialog} onOpenChange={setShowDeleteQuestionDialog}>
         <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>تأكيد حذف السؤال</DialogTitle>
+          </DialogHeader>
           <div className="p-2 text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="text-red-500 w-8 h-8" />
@@ -232,6 +262,39 @@ export default function AuctionQuestionsAdmin() {
               <Button
                 onClick={confirmDeleteQuestion}
                 className="px-6 bg-red-500 hover:bg-red-600 text-white rounded-xl"
+              >
+                حذف الآن
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
+        <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl bg-[linear-gradient(180deg,#ffffff_0%,#fcfbff_100%)]">
+          <DialogHeader className="sr-only">
+            <DialogTitle>تأكيد حذف الفئة</DialogTitle>
+          </DialogHeader>
+          <div className="p-2 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+              <FolderPlus className="h-8 w-8 text-red-500" />
+            </div>
+            <h2 className="mb-2 text-xl font-bold text-slate-800">تأكيد حذف الفئة</h2>
+            <p className="mb-6 text-slate-500">هل أنت متأكد من حذف هذه الفئة؟ سيتم حذف جميع الأسئلة المرتبطة بها.</p>
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteCategoryDialog(false)
+                  setDeleteCategoryId(null)
+                }}
+                className="rounded-xl px-6"
+              >
+                إلغاء
+              </Button>
+              <Button
+                onClick={confirmDeleteCategory}
+                className="rounded-xl bg-red-500 px-6 text-white hover:bg-red-600"
               >
                 حذف الآن
               </Button>
@@ -400,6 +463,11 @@ export default function AuctionQuestionsAdmin() {
           </DialogHeader>
           <div className="p-6 space-y-5">
             <div className="space-y-2">
+              {actionError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {actionError}
+                </div>
+              ) : null}
               <Label className="font-semibold">الفئة</Label>
               <Select
                 value={newQuestion.category_id}
@@ -487,6 +555,11 @@ export default function AuctionQuestionsAdmin() {
           </DialogHeader>
           {editingQuestion && (
             <div className="p-6 space-y-5">
+              {actionError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {actionError}
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label className="font-semibold">الفئة</Label>
                 <Select

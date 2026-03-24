@@ -1,9 +1,30 @@
+import { requireAdminSession } from '@/lib/auth/admin'
+import { createAdminClient, hasMatchingServiceRoleConfig } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+async function getReadAuctionCategoriesClient() {
+  if (hasMatchingServiceRoleConfig()) {
+    return createAdminClient()
+  }
+
+  return createClient()
+}
+
+async function getWriteAuctionCategoriesClient() {
+  if (hasMatchingServiceRoleConfig()) {
+    return createAdminClient()
+  }
+
+  return createClient()
+}
+
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = await getReadAuctionCategoriesClient()
     
     const { data, error } = await supabase
       .from('auction_categories')
@@ -12,7 +33,11 @@ export async function GET() {
 
     if (error) throw error
 
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      },
+    })
   } catch (error) {
     console.error('Error fetching auction categories:', error)
     return NextResponse.json({ error: 'Failed to fetch auction categories' }, { status: 500 })
@@ -20,8 +45,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireAdminSession(request, 'إدارة الألعاب')
+  if ("response" in auth) {
+    return auth.response
+  }
+
   try {
-    const supabase = await createClient()
+    const supabase = await getWriteAuctionCategoriesClient()
     const body = await request.json()
     
     const { data, error } = await supabase
@@ -41,8 +71,13 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const auth = await requireAdminSession(request, 'إدارة الألعاب')
+  if ("response" in auth) {
+    return auth.response
+  }
+
   try {
-    const supabase = await createClient()
+    const supabase = await getWriteAuctionCategoriesClient()
     const body = await request.json()
     
     const { data, error } = await supabase
@@ -64,8 +99,13 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const auth = await requireAdminSession(request, 'إدارة الألعاب')
+  if ("response" in auth) {
+    return auth.response
+  }
+
   try {
-    const supabase = await createClient()
+    const supabase = await getWriteAuctionCategoriesClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

@@ -86,8 +86,15 @@ export function Header() {
 
     void hydrateUser()
 
+    const handlePageShow = () => {
+      void hydrateUser()
+    }
+
+    window.addEventListener("pageshow", handlePageShow)
+
     return () => {
       cancelled = true
+      window.removeEventListener("pageshow", handlePageShow)
     }
   }, [pathname])
 
