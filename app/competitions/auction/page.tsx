@@ -363,14 +363,14 @@ export default function AuctionGame() {
                       placeholder={`اكتب اسم الفريق ${index + 1}`}
                       value={name}
                       onChange={(e) => handleTeamNameChange(index, e.target.value)}
-                      className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
+                      className="h-14 rounded-2xl border border-[#d9d2f6] bg-white px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
                     />
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => removeTeamField(index)}
                       disabled={teamNames.length <= MIN_TEAMS}
-                      className="h-14 min-w-14 rounded-2xl border-[#e7defc] px-4 text-[#7c3aed] hover:bg-[#f5f0ff] disabled:text-[#c5b4ef]"
+                      className="h-14 min-w-14 rounded-2xl border-[#e7defc] bg-white px-4 text-[#7c3aed] hover:bg-[#f5f0ff] disabled:text-[#c5b4ef]"
                       title="حذف الفريق"
                     >
                       <Minus className="h-5 w-5" />
