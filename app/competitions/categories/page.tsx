@@ -735,7 +735,7 @@ export default function CategoriesPage() {
                     setTeamNames(newNames)
                   }}
                   placeholder={`اكتب اسم الفريق ${idx + 1}`}
-                  className="h-14 rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
+                  className="h-14 rounded-2xl border border-[#d9d2f6] bg-white px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] focus:border-[#7c3aed] focus:ring-4 focus:ring-[#7c3aed]/10"
                 />
               </GameField>
             ))}
@@ -770,7 +770,7 @@ export default function CategoriesPage() {
           ) : (
             <>
               {questionsResetNeeded ? (
-                <div className="mb-6 rounded-[1.5rem] border border-[#7c3aed]/15 bg-[#fcfbff] px-5 py-4 text-right shadow-sm">
+                <div className="mb-6 rounded-[1.5rem] border border-white/55 bg-white/52 px-5 py-4 text-right shadow-sm backdrop-blur-md">
                   <div className="text-sm font-bold leading-7 text-[#5b21b6] md:text-base">
                     لم تعد الأسئلة الجديدة كافية لبناء لوحة كاملة في الفئات المختارة لهذا المستخدم. أعد الأسئلة ثم ابدأ الجولة من جديد.
                   </div>
@@ -798,7 +798,7 @@ export default function CategoriesPage() {
                       className={`relative overflow-hidden rounded-[1.6rem] border-2 text-center transition-all ${
                         isSelected
                           ? "border-[#8b5cf6]/45 bg-[linear-gradient(135deg,#7c3aed_0%,#6d28d9_100%)] text-white shadow-[0_20px_50px_rgba(124,58,237,0.18)]"
-                          : "border-[#d8c9fb] bg-[#fcfbff] text-[#1f1147] hover:border-[#a78bfa]"
+                          : "border-[#d8c9fb] bg-white text-[#1f1147] hover:border-[#a78bfa]"
                       } ${!isSelected && selectedCategoryIds.length >= MAX_SELECTED_CATEGORIES ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     >
                       {artwork ? (
@@ -836,7 +836,7 @@ export default function CategoriesPage() {
                 <Button
                   onClick={() => setStep("teams")}
                   variant="outline"
-                  className="h-14 flex-1 rounded-2xl border-[#c4b5fd] text-base font-black text-[#6d28d9] hover:bg-[#f5f3ff]"
+                  className="h-14 flex-1 rounded-2xl border-[#c4b5fd] bg-white text-base font-black text-[#6d28d9] hover:bg-[#f5f3ff]"
                 >
                   رجوع
                 </Button>
