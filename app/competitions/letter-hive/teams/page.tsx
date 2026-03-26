@@ -57,7 +57,7 @@ export default function LetterHiveTeams() {
               onChange={(e) => handleChange(0, e.target.value)}
               required
               placeholder="اكتب اسم الفريق الأول"
-              className="h-14 w-full rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] outline-none transition focus:border-[#7c3aed] focus:bg-white focus:ring-4 focus:ring-[#7c3aed]/10"
+              className="h-14 w-full rounded-2xl border border-[#d9d2f6] bg-white px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] outline-none transition focus:border-[#7c3aed] focus:bg-white focus:ring-4 focus:ring-[#7c3aed]/10"
             />
           </GameField>
 
@@ -68,7 +68,7 @@ export default function LetterHiveTeams() {
               onChange={(e) => handleChange(1, e.target.value)}
               required
               placeholder="اكتب اسم الفريق الثاني"
-              className="h-14 w-full rounded-2xl border border-[#d9d2f6] bg-[#fcfbff] px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] outline-none transition focus:border-[#7c3aed] focus:bg-white focus:ring-4 focus:ring-[#7c3aed]/10"
+              className="h-14 w-full rounded-2xl border border-[#d9d2f6] bg-white px-4 text-right text-[#1f1147] placeholder:text-[#8a83a8] outline-none transition focus:border-[#7c3aed] focus:bg-white focus:ring-4 focus:ring-[#7c3aed]/10"
             />
           </GameField>
 
