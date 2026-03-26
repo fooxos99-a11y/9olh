@@ -301,11 +301,10 @@ function GameArtwork({ game, index }: { game: GameCard; index: number }) {
 }
 
 export default function CompetitionsPage() {
-  const initialUser = getCachedClientAuth()
   const [loadingGameId, setLoadingGameId] = useState<string | null>(null)
-  const [hasFullAccess, setHasFullAccess] = useState(() => Boolean(initialUser && FULL_LIBRARY_ROLES.includes(initialUser.role)))
-  const [hasRegisteredAccess, setHasRegisteredAccess] = useState(() => Boolean(initialUser && REGISTERED_LIBRARY_ROLES.includes(initialUser.role)))
-  const [authResolved, setAuthResolved] = useState(() => Boolean(initialUser))
+  const [hasFullAccess, setHasFullAccess] = useState(false)
+  const [hasRegisteredAccess, setHasRegisteredAccess] = useState(false)
+  const [authResolved, setAuthResolved] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
